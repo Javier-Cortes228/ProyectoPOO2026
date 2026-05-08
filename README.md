@@ -10,3 +10,5 @@ Herramientas  a usar (estructura):
 , Backend: Java + Spring Boot
 , Base de datos: PostgreSQL
 , Frontend: NO DEFINIDO
+
+
