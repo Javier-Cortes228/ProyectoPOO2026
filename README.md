@@ -1,14 +1,39 @@
-Grupo:
-, Javier Cortés 
-, Victor Valenzuela 
-, Carlos Ramirez
+# BanduMusic 🎵
 
-Idea general del proyecto:
-Este proyecto será una plataforma de música inspirada en Spotify donde las personas podrán crear una cuenta, explorar un catálogo de canciones, reproducir su música favorita y organizarla en playlists personalizadas, todo con una experiencia simple, clara y fácil de usar; en su primera versión se enfocará en lo esencial (buscar, escuchar, guardar favoritos y gestionar listas) para ofrecer valor real desde el inicio, pero con una visión de crecimiento y escalabilidad para incorporar más adelante funciones como recomendaciones, estadísticas de escucha y una experiencia más social, convirtiéndose progresivamente en un reproductor musical más completo.
+**Proyecto de Programación Orientada a Objetos (POO) 2026**
+*Universidad de La Frontera, Temuco, Chile*
 
-Herramientas  a usar (estructura):
-, Backend: Java + Spring Boot
-, Base de datos: PostgreSQL
-, Frontend: NO DEFINIDO
+## 📌 Descripción del Proyecto
+BanduMusic es una plataforma de música inspirada en Spotify. El objetivo de esta aplicación es permitir a los usuarios crear una cuenta, explorar un catálogo de canciones, reproducir su música favorita y organizarla en playlists personalizadas mediante una experiencia simple, clara y fácil de usar.
 
+En su primera versión (MVP), el enfoque está en las funcionalidades esenciales para ofrecer valor real desde el inicio, con una arquitectura escalable pensada para futuras integraciones.
 
+## 👥 Integrantes del Equipo
+* **Javier Cortés**
+* **Victor Valenzuela**
+* **Carlos Ramirez**
+
+## 🛠️ Stack Tecnológico
+El proyecto está estructurado en 3 capas, utilizando las siguientes tecnologías:
+* **Backend:** Java + Spring Boot
+* **Base de Datos:** PostgreSQL
+* **Frontend:** Web Tradicional (HTML, CSS y JavaScript Vanilla)
+
+## 🚀 Funcionalidades Principales (MVP)
+* Creación y gestión de cuentas de usuario.
+* Búsqueda y exploración de catálogo musical.
+* Reproducción de canciones.
+* Guardado de canciones favoritas.
+* Creación y gestión de playlists personalizadas.
+
+## ⚙️ Requisitos Técnicos Académicos (POO)
+Este proyecto se desarrolla bajo estrictos criterios de evaluación del curso de Programación Orientada a Objetos, implementando:
+* **Diseño Orientado a Objetos:** Uso avanzado de Herencia, Clases Abstractas e Interfaces propias.
+* **Relaciones UML:** Implementación de asociaciones (agregación/composición) y dependencias.
+* **Manejo de Errores:** Implementación de al menos 3 excepciones personalizadas.
+* **Programación Funcional:** Uso de *Streams* y *Lambdas* de Java para el manejo y filtrado de colecciones.
+* **Calidad de Código:** Desarrollo de al menos 10 pruebas unitarias utilizando JUnit.
+
+## 📅 Estado Actual
+* **Fase:** Semana 1 - Diseño, Estructura y Repositorio.
+* **Progreso:** Creación del repositorio y planificación de la arquitectura UML.
