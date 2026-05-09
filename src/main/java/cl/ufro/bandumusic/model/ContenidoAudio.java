@@ -1,7 +1,12 @@
 package cl.ufro.bandumusic.model;
+import jakarta.persistence.*;
+
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
 
 public abstract class ContenidoAudio implements Reproducible {
 
+    @Id
     protected String id;
     protected  String titulo;
     protected int duracionSegundos;

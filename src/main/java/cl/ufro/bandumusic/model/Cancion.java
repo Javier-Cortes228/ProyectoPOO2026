@@ -1,5 +1,7 @@
 package cl.ufro.bandumusic.model;
+import jakarta.persistence.Entity;
 
+@Entity
 public class Cancion extends ContenidoAudio {
 
     private String artista;

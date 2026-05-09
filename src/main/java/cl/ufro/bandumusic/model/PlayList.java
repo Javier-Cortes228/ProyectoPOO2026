@@ -1,11 +1,16 @@
 package cl.ufro.bandumusic.model;
-
 import java.util.ArrayList;
 import java.util.List;
+import jakarta.persistence.*;
 
+@Entity
 public class PlayList {
+
+    @Id
     private String id;
     private String nombre;
+
+    @ManyToMany
     private List<ContenidoAudio> contenidos;
 
     public PlayList() {
