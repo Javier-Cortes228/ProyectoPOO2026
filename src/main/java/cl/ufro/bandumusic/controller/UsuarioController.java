@@ -31,13 +31,15 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioGuardado);
     }
 
-    //Metodo para el Login
+    //Metodo para el Login:
     @PostMapping("/login")
-    public ResponseEntity<?> loginUsuario(@RequestBody Usuario credenciales) {
+    public ResponseEntity<?> loginUsuario(@RequestBody java.util.Map<String, String> credenciales) {
+        String correo = credenciales.get("correo");
+        String contrasena = credenciales.get("contrasena");
 
-        Usuario usuarioEnBaseDatos = usuarioRepository.findByCorreo(credenciales.getCorreo());
+        Usuario usuarioEnBaseDatos = usuarioRepository.findByCorreo(correo);
 
-        if (usuarioEnBaseDatos != null && usuarioEnBaseDatos.verificarCredenciales(credenciales.getCorreo(), credenciales.getContrasena())) {
+        if (usuarioEnBaseDatos != null && usuarioEnBaseDatos.getContrasena().equals(contrasena)) {
             return ResponseEntity.ok(usuarioEnBaseDatos);
         } else {
             return ResponseEntity.status(401).body("Credenciales incorrectas");

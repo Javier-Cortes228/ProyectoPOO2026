@@ -1,67 +1,43 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #121212;
-    color: #ffffff;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+:root {
+    --bg-dark: #121212;
+    --bg-light: #181818;
+    --brand-green: #1DB954;
 }
 
-.container {
-    text-align: center;
-    width: 100%;
-    max-width: 800px;
+body { font-family: sans-serif; background: var(--bg-dark); color: white; margin: 0; }
+
+/* Layout */
+.main-app { display: flex; height: 100vh; overflow: hidden; }
+
+.sidebar { width: 240px; background: #000; padding: 20px; }
+.content { flex: 1; padding: 20px; overflow-y: auto; background: linear-gradient(to bottom, #222, var(--bg-dark)); }
+
+/* Grid de Canciones */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px; padding-top: 20px;
 }
 
-h1 {
-    color: #1DB954; /* Verde estilo Spotify */
-    margin-bottom: 40px;
+.song-card {
+    background: var(--bg-light); padding: 15px; border-radius: 8px;
+    transition: background 0.3s; cursor: pointer; position: relative;
+}
+.song-card:hover { background: #282828; }
+
+/* Reproductor Inferior */
+.player-bar {
+    position: fixed; bottom: 0; width: 100%; height: 90px;
+    background: #181818; border-top: 1px solid #282828;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
 }
 
-.auth-section {
-    display: flex;
-    justify-content: space-around;
-    gap: 20px;
+.controls button {
+    background: none; border: none; color: white; font-size: 24px;
+    margin: 0 10px; cursor: pointer;
 }
 
-.card {
-    background-color: #181818;
-    padding: 30px;
-    border-radius: 10px;
-    width: 45%;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-}
+#play-pause-btn { background: white; color: black; border-radius: 50%; width: 40px; height: 40px; font-size: 18px; }
 
-input {
-    width: 90%;
-    padding: 10px;
-    margin: 10px 0;
-    border-radius: 5px;
-    border: 1px solid #333;
-    background-color: #282828;
-    color: white;
-}
-
-button {
-    width: 95%;
-    padding: 10px;
-    margin-top: 15px;
-    background-color: #1DB954;
-    color: white;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-button:hover {
-    background-color: #1ed760;
-}
-
-.mensaje {
-    margin-top: 15px;
-    font-size: 14px;
-}
+/* Estilo de Inputs */
+input { padding: 10px; border-radius: 20px; border: none; background: #333; color: white; width: 300px; }
