@@ -26,6 +26,9 @@ public class Usuario {
     }
 
     public Usuario(String id, String nombreUsuario, String correo, String contrasena) {
+        if (nombreUsuario == null || nombreUsuario.trim().isEmpty()){
+            throw new IllegalArgumentException("El nombre de usuario no puede estar vacío."); //validacion para el nombre vacio
+        }
         this.id = id;
         this.nombreUsuario = nombreUsuario;
         this.correo = correo;

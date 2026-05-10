@@ -17,10 +17,15 @@ public class Catalogo {
     }
 
     public List<ContenidoAudio> buscarPorTitulo(String palabraClave) {
-        // Usamos Streams para filtrar la lista
-        return cancionesDisponibles.stream()
+        List<ContenidoAudio> resultados = cancionesDisponibles.stream()
                 .filter(audio -> audio.getTitulo().toLowerCase().contains(palabraClave.toLowerCase()))
                 .collect(Collectors.toList());
+
+        //validacion si la lista quedo vacia despues de filtrar
+        if (resultados.isEmpty()) {
+            throw new cl.ufro.bandumusic.exception.CancionNoEncontradaException("No se encontró contenido con: " + palabraClave);
+        }
+        return resultados;
     }
 
     public List<ContenidoAudio> filtrarPorArtista(String artista) {

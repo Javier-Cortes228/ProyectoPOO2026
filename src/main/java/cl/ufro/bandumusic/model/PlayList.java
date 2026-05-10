@@ -18,6 +18,9 @@ public class PlayList {
     }
 
     public PlayList(String id, String nombre) {
+        if (nombre == null || nombre.trim().isEmpty()) {
+            throw new IllegalArgumentException("La playlist debe tener un título."); //validacion para titulos vacios
+        }
         this.id = id;
         this.nombre = nombre;
         this.contenidos = new ArrayList<>();
@@ -25,6 +28,10 @@ public class PlayList {
 
 
     public void agregarContenido(ContenidoAudio contenido) {
+        //validacion de limite de pisttas
+        if (this.contenidos.size() >= 300) {
+            throw new cl.ufro.bandumusic.exception.PlaylistLlenaException("La playlist ha alcanzado su límite de 300 pistas.");
+        }
         this.contenidos.add(contenido);
     }
 

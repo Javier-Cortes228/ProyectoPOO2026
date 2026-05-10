@@ -1,0 +1,67 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    text-align: center;
+    width: 100%;
+    max-width: 800px;
+}
+
+h1 {
+    color: #1DB954; /* Verde estilo Spotify */
+    margin-bottom: 40px;
+}
+
+.auth-section {
+    display: flex;
+    justify-content: space-around;
+    gap: 20px;
+}
+
+.card {
+    background-color: #181818;
+    padding: 30px;
+    border-radius: 10px;
+    width: 45%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+input {
+    width: 90%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #333;
+    background-color: #282828;
+    color: white;
+}
+
+button {
+    width: 95%;
+    padding: 10px;
+    margin-top: 15px;
+    background-color: #1DB954;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background-color: #1ed760;
+}
+
+.mensaje {
+    margin-top: 15px;
+    font-size: 14px;
+}
