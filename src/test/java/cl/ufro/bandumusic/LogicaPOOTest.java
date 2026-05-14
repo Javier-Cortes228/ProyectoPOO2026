@@ -8,8 +8,19 @@ import static org.junit.jupiter.api.Assertions.*;
 import cl.ufro.bandumusic.exception.PlaylistLlenaException;
 import cl.ufro.bandumusic.exception.CancionNoEncontradaException;
 import cl.ufro.bandumusic.model.Catalogo;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 public class LogicaPOOTest {
+
+    // TEST 11: Comprobar que BCrypt protege la contrasena guardada
+    @Test
+    public void testHashContrasenaBCryptNoGuardaTextoPlano() {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String hash = encoder.encode("1234");
+
+        assertNotEquals("1234", hash, "La contrasena guardada no debe ser texto plano");
+        assertTrue(encoder.matches("1234", hash), "BCrypt debe validar la contrasena original contra el hash");
+    }
 
     // TEST 1: Comprobar que el login funciona con datos correctos
     @Test

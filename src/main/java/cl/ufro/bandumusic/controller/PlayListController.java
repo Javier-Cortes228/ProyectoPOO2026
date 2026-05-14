@@ -1,62 +1,47 @@
 package cl.ufro.bandumusic.controller;
 
-import cl.ufro.bandumusic.model.ContenidoAudio;
+import cl.ufro.bandumusic.dto.response.MensajeResponse;
+import cl.ufro.bandumusic.dto.response.PlayListResponse;
 import cl.ufro.bandumusic.model.PlayList;
-import cl.ufro.bandumusic.model.Usuario;
-import cl.ufro.bandumusic.repository.ContenidoAudioRepository;
-import cl.ufro.bandumusic.repository.PlayListRepository;
-import cl.ufro.bandumusic.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import cl.ufro.bandumusic.service.PlayListService;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/playlists")
-@CrossOrigin(origins = "*")
+@Validated
 public class PlayListController {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final PlayListService playListService;
 
-    @Autowired
-    private PlayListRepository playListRepository;
-
-    @Autowired
-    private ContenidoAudioRepository contenidoAudioRepository;
-
-    // Endpoint para crear una nueva playlist para un usuario específico
-    @PostMapping("/{usuarioId}/crear")
-    public ResponseEntity<?> crearPlaylist(@PathVariable String usuarioId, @RequestParam String nombre) {
-        Usuario usuario = usuarioRepository.findById(usuarioId).orElse(null);
-        if (usuario == null) {
-            return ResponseEntity.badRequest().body("Usuario no encontrado");
-        }
-
-        try {
-            PlayList nuevaLista = usuario.crearPlaylist(nombre);
-            usuarioRepository.save(usuario);
-            return ResponseEntity.ok(nuevaLista);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public PlayListController(PlayListService playListService) {
+        this.playListService = playListService;
     }
 
-    // Endpoint para agregar una canción a una playlist
+    @PostMapping("/{usuarioId}/crear")
+    public ResponseEntity<PlayListResponse> crearPlaylist(
+            @PathVariable @NotBlank(message = "El id del usuario es obligatorio.") String usuarioId,
+            @RequestParam @NotBlank(message = "El nombre de la playlist es obligatorio.")
+            @Size(max = 80, message = "El nombre de la playlist no puede superar 80 caracteres.")
+            String nombre
+    ) {
+        PlayList nuevaLista = playListService.crearPlaylist(usuarioId, nombre);
+        return ResponseEntity.ok(PlayListResponse.from(nuevaLista));
+    }
+
     @PostMapping("/{playlistId}/agregar/{contenidoId}")
-    public ResponseEntity<?> agregarContenido(@PathVariable String playlistId, @PathVariable String contenidoId) {
-        PlayList lista = playListRepository.findById(playlistId).orElse(null);
-        ContenidoAudio audio = contenidoAudioRepository.findById(contenidoId).orElse(null);
-
-        if (lista == null || audio == null) {
-            return ResponseEntity.badRequest().body("Playlist o Contenido no encontrado");
-        }
-
-        try {
-            lista.agregarContenido(audio);
-            playListRepository.save(lista);
-            return ResponseEntity.ok("Contenido agregado exitosamente");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<MensajeResponse> agregarContenido(
+            @PathVariable @NotBlank(message = "El id de la playlist es obligatorio.") String playlistId,
+            @PathVariable @NotBlank(message = "El id del contenido es obligatorio.") String contenidoId
+    ) {
+        playListService.agregarContenido(playlistId, contenidoId);
+        return ResponseEntity.ok(new MensajeResponse("Contenido agregado exitosamente."));
     }
 }

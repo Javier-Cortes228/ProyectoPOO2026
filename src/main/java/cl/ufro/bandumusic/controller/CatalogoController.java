@@ -1,49 +1,51 @@
 package cl.ufro.bandumusic.controller;
 
-import cl.ufro.bandumusic.model.Catalogo;
-import cl.ufro.bandumusic.model.ContenidoAudio;
-import cl.ufro.bandumusic.repository.ContenidoAudioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import cl.ufro.bandumusic.dto.response.ContenidoAudioResponse;
+import cl.ufro.bandumusic.service.CatalogoService;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/catalogo")
-@CrossOrigin(origins = "*")
+@Validated
 public class CatalogoController {
 
-    @Autowired
-    private ContenidoAudioRepository contenidoAudioRepository;
+    private final CatalogoService catalogoService;
 
-    // Metodo para obtener el catalogo
-    private Catalogo obtenerCatalogoPoblado() {
-        Catalogo catalogo = new Catalogo();
-        List<ContenidoAudio> todosLosAudios = contenidoAudioRepository.findAll();
-        for (ContenidoAudio audio : todosLosAudios) {
-            catalogo.agregarAlCatalogo(audio);
-        }
-        return catalogo;
+    public CatalogoController(CatalogoService catalogoService) {
+        this.catalogoService = catalogoService;
     }
 
-    // Endpoint para buscar por título
     @GetMapping("/buscar")
-    public ResponseEntity<?> buscarPorTitulo(@RequestParam String titulo) {
-        try {
-            Catalogo catalogo = obtenerCatalogoPoblado();
-            List<ContenidoAudio> resultados = catalogo.buscarPorTitulo(titulo);
-            return ResponseEntity.ok(resultados);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<List<ContenidoAudioResponse>> buscarPorTitulo(
+            @RequestParam(defaultValue = "")
+            @Size(max = 100, message = "La busqueda no puede superar 100 caracteres.")
+            String titulo
+    ) {
+        List<ContenidoAudioResponse> resultados = catalogoService.buscarPorTitulo(titulo).stream()
+                .map(ContenidoAudioResponse::from)
+                .toList();
+        return ResponseEntity.ok(resultados);
     }
 
-    // Endpoint para filtrar por artista
     @GetMapping("/filtrar")
-    public ResponseEntity<?> filtrarPorArtista(@RequestParam String artista) {
-        Catalogo catalogo = obtenerCatalogoPoblado();
-        List<ContenidoAudio> resultados = catalogo.filtrarPorArtista(artista);
+    public ResponseEntity<List<ContenidoAudioResponse>> filtrarPorArtista(
+            @RequestParam
+            @NotBlank(message = "El artista es obligatorio.")
+            @Size(max = 100, message = "El artista no puede superar 100 caracteres.")
+            String artista
+    ) {
+        List<ContenidoAudioResponse> resultados = catalogoService.filtrarPorArtista(artista).stream()
+                .map(ContenidoAudioResponse::from)
+                .toList();
         return ResponseEntity.ok(resultados);
     }
 }

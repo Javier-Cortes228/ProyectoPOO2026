@@ -1,6 +1,8 @@
 package cl.ufro.bandumusic.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
@@ -14,8 +16,15 @@ public class Usuario {
 
     @Id
     private String id;
+
+    @Column(nullable = false, length = 60)
     private String nombreUsuario;
+
+    @Column(nullable = false, unique = true, length = 120)
     private String correo;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Column(nullable = false, length = 120)
     private String contrasena;
 
     @OneToMany(cascade = CascadeType.ALL)
@@ -26,18 +35,17 @@ public class Usuario {
     }
 
     public Usuario(String id, String nombreUsuario, String correo, String contrasena) {
-        if (nombreUsuario == null || nombreUsuario.trim().isEmpty()){
-            throw new IllegalArgumentException("El nombre de usuario no puede estar vacío."); //validacion para el nombre vacio
-        }
+        validarTexto(nombreUsuario, "El nombre de usuario no puede estar vacio.");
+        validarTexto(correo, "El correo no puede estar vacio.");
+        validarTexto(contrasena, "La contrasena no puede estar vacia.");
+
         this.id = id;
-        this.nombreUsuario = nombreUsuario;
-        this.correo = correo;
+        this.nombreUsuario = nombreUsuario.trim();
+        this.correo = correo.trim();
         this.contrasena = contrasena;
         this.playlist = new ArrayList<>();
         this.playlist.add(new PlayList(UUID.randomUUID().toString(), "Favoritos"));
-        //Al crear un usuario, le creamos automáticamente su lista de favoritos
     }
-
 
     public PlayList crearPlaylist(String nombre) {
         PlayList nueva = new PlayList(UUID.randomUUID().toString(), nombre);
@@ -54,9 +62,15 @@ public class Usuario {
     }
 
     public void marcarComoFavorito(ContenidoAudio audio) {
-        // Asumimos que la lista en la posición 0 siempre es "Favoritos"
+        // La primera lista creada por el constructor corresponde a Favoritos.
         if (!this.playlist.isEmpty()) {
             this.playlist.get(0).agregarContenido(audio);
+        }
+    }
+
+    private void validarTexto(String valor, String mensaje) {
+        if (valor == null || valor.trim().isEmpty()) {
+            throw new IllegalArgumentException(mensaje);
         }
     }
 
@@ -97,7 +111,6 @@ public class Usuario {
     }
 
     public void setPlaylist(List<PlayList> playlist) {
-        this.playlist = playlist;
+        this.playlist = playlist != null ? playlist : new ArrayList<>();
     }
-
 }

@@ -1,10 +1,17 @@
 package cl.ufro.bandumusic.model;
+
+import cl.ufro.bandumusic.exception.PlaylistLlenaException;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+
 import java.util.ArrayList;
 import java.util.List;
-import jakarta.persistence.*;
 
 @Entity
 public class PlayList {
+
+    private static final int LIMITE_CONTENIDOS = 300;
 
     @Id
     private String id;
@@ -18,20 +25,21 @@ public class PlayList {
     }
 
     public PlayList(String id, String nombre) {
-        if (nombre == null || nombre.trim().isEmpty()) {
-            throw new IllegalArgumentException("La playlist debe tener un título."); //validacion para titulos vacios
-        }
+        validarNombre(nombre);
         this.id = id;
-        this.nombre = nombre;
+        this.nombre = nombre.trim();
         this.contenidos = new ArrayList<>();
     }
 
-
     public void agregarContenido(ContenidoAudio contenido) {
-        //validacion de limite de pisttas
-        if (this.contenidos.size() >= 300) {
-            throw new cl.ufro.bandumusic.exception.PlaylistLlenaException("La playlist ha alcanzado su límite de 300 pistas.");
+        if (contenido == null) {
+            throw new IllegalArgumentException("El contenido no puede ser nulo.");
         }
+
+        if (this.contenidos.size() >= LIMITE_CONTENIDOS) {
+            throw new PlaylistLlenaException("La playlist ha alcanzado su limite de 300 pistas.");
+        }
+
         this.contenidos.add(contenido);
     }
 
@@ -47,6 +55,12 @@ public class PlayList {
         return total;
     }
 
+    private void validarNombre(String nombre) {
+        if (nombre == null || nombre.trim().isEmpty()) {
+            throw new IllegalArgumentException("La playlist debe tener un titulo.");
+        }
+    }
+
     public String getId() {
         return id;
     }
@@ -60,7 +74,8 @@ public class PlayList {
     }
 
     public void setNombre(String nombre) {
-        this.nombre = nombre;
+        validarNombre(nombre);
+        this.nombre = nombre.trim();
     }
 
     public List<ContenidoAudio> getContenidos() {
@@ -68,6 +83,6 @@ public class PlayList {
     }
 
     public void setContenidos(List<ContenidoAudio> contenidos) {
-        this.contenidos = contenidos;
+        this.contenidos = contenidos != null ? contenidos : new ArrayList<>();
     }
 }

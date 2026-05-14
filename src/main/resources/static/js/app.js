@@ -73,7 +73,10 @@ async function iniciarSesion() {
 
         if (respuesta.ok) {
             const usuarioLogueado = await respuesta.json();
-            usuarioActual = usuarioLogueado;
+            usuarioActual = {
+                ...usuarioLogueado,
+                playlist: []
+            };
             renderizarPlaylists();
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('app-container').style.display = 'flex';

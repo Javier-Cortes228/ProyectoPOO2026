@@ -5,18 +5,26 @@ import cl.ufro.bandumusic.model.Podcast;
 import cl.ufro.bandumusic.model.Usuario;
 import cl.ufro.bandumusic.repository.ContenidoAudioRepository;
 import cl.ufro.bandumusic.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DataSeeder implements CommandLineRunner {
 
-    @Autowired
-    private ContenidoAudioRepository contenidoAudioRepository;
+    private final ContenidoAudioRepository contenidoAudioRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    public DataSeeder(
+            ContenidoAudioRepository contenidoAudioRepository,
+            UsuarioRepository usuarioRepository,
+            PasswordEncoder passwordEncoder
+    ) {
+        this.contenidoAudioRepository = contenidoAudioRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public void run(String... args) throws Exception {
@@ -31,8 +39,8 @@ public class DataSeeder implements CommandLineRunner {
         // Solo inyectamos usuarios si la tabla está vacía
         if (usuarioRepository.count() == 0) {
             System.out.println("Sembrando usuarios por defecto...");
-            usuarioRepository.save(new Usuario("u1", "Admin", "admin@ufro.cl", "1234"));
-            usuarioRepository.save(new Usuario("u2", "Test", "test@ufro.cl", "1234"));
+            usuarioRepository.save(new Usuario("u1", "Admin", "admin@ufro.cl", passwordEncoder.encode("1234")));
+            usuarioRepository.save(new Usuario("u2", "Test", "test@ufro.cl", passwordEncoder.encode("1234")));
             System.out.println("Usuarios listos.");
         }
     }

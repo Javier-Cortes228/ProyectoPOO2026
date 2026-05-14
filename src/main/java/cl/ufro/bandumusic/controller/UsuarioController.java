@@ -1,48 +1,37 @@
 package cl.ufro.bandumusic.controller;
 
-import cl.ufro.bandumusic.exception.UsuarioDuplicadoException;
+import cl.ufro.bandumusic.dto.request.LoginRequest;
+import cl.ufro.bandumusic.dto.request.RegistroUsuarioRequest;
+import cl.ufro.bandumusic.dto.response.UsuarioResponse;
 import cl.ufro.bandumusic.model.Usuario;
-import cl.ufro.bandumusic.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import cl.ufro.bandumusic.service.UsuarioService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/usuarios") // Esta es la URL a la que llamará el Frontend
-@CrossOrigin(origins = "*") // Permite que el frontend se conecte sin bloqueos de seguridad
+@RequestMapping("/api/usuarios")
 public class UsuarioController {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioService usuarioService;
 
-    //Metodo para registrar un nuevo Usuario
-    @PostMapping("/registrar")
-    public ResponseEntity<?> registrarUsuario(@RequestBody Usuario nuevoUsuario) {
-
-        if (usuarioRepository.existsByCorreo(nuevoUsuario.getCorreo())) {
-            throw new UsuarioDuplicadoException("El correo " + nuevoUsuario.getCorreo() + " ya está registrado.");
-        }
-
-        nuevoUsuario.setId(UUID.randomUUID().toString());
-        Usuario usuarioGuardado = usuarioRepository.save(nuevoUsuario);
-
-        return ResponseEntity.ok(usuarioGuardado);
+    public UsuarioController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
     }
 
-    //Metodo para el Login:
+    @PostMapping("/registrar")
+    public ResponseEntity<UsuarioResponse> registrarUsuario(@Valid @RequestBody RegistroUsuarioRequest request) {
+        Usuario usuarioGuardado = usuarioService.registrar(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioResponse.from(usuarioGuardado));
+    }
+
     @PostMapping("/login")
-    public ResponseEntity<?> loginUsuario(@RequestBody java.util.Map<String, String> credenciales) {
-        String correo = credenciales.get("correo");
-        String contrasena = credenciales.get("contrasena");
-
-        Usuario usuarioEnBaseDatos = usuarioRepository.findByCorreo(correo);
-
-        if (usuarioEnBaseDatos != null && usuarioEnBaseDatos.getContrasena().equals(contrasena)) {
-            return ResponseEntity.ok(usuarioEnBaseDatos);
-        } else {
-            return ResponseEntity.status(401).body("Credenciales incorrectas");
-        }
+    public ResponseEntity<UsuarioResponse> loginUsuario(@Valid @RequestBody LoginRequest request) {
+        Usuario usuario = usuarioService.login(request);
+        return ResponseEntity.ok(UsuarioResponse.from(usuario));
     }
 }
