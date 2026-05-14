@@ -2,42 +2,63 @@
     --bg-dark: #121212;
     --bg-light: #181818;
     --brand-green: #1DB954;
+    --text-main: #ffffff;
+    --text-sub: #b3b3b3;
 }
 
-body { font-family: sans-serif; background: var(--bg-dark); color: white; margin: 0; }
-
-/* Layout */
-.main-app { display: flex; height: 100vh; overflow: hidden; }
-
-.sidebar { width: 240px; background: #000; padding: 20px; }
-.content { flex: 1; padding: 20px; overflow-y: auto; background: linear-gradient(to bottom, #222, var(--bg-dark)); }
-
-/* Grid de Canciones */
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 20px; padding-top: 20px;
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    margin: 0;
+    padding: 0;
 }
 
-.song-card {
-    background: var(--bg-light); padding: 15px; border-radius: 8px;
-    transition: background 0.3s; cursor: pointer; position: relative;
-}
-.song-card:hover { background: #282828; }
+/* --- LOGIN --- */
+.container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+.card { background-color: var(--bg-light); padding: 40px; border-radius: 10px; width: 300px; text-align: center; }
+.card input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 4px; border: none; background: #333; color: white; }
+.card button { width: 100%; padding: 12px; background-color: var(--brand-green); color: white; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+.card button:hover { background-color: #1ed760; transform: scale(1.02); }
 
-/* Reproductor Inferior */
-.player-bar {
-    position: fixed; bottom: 0; width: 100%; height: 90px;
-    background: #181818; border-top: 1px solid #282828;
-    display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
-}
+/* --- APP LAYOUT --- */
+.main-app { display: flex; height: 100vh; overflow: hidden; padding-bottom: 90px; box-sizing: border-box; }
 
-.controls button {
-    background: none; border: none; color: white; font-size: 24px;
-    margin: 0 10px; cursor: pointer;
-}
+.sidebar { width: 220px; background-color: #000; padding: 24px; display: flex; flex-direction: column; }
+.sidebar h2 { color: var(--brand-green); margin-bottom: 30px; }
+.sidebar ul { list-style: none; padding: 0; }
+.sidebar li { color: var(--text-sub); margin-bottom: 20px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+.sidebar li:hover, .sidebar li.active { color: var(--text-main); }
 
-#play-pause-btn { background: white; color: black; border-radius: 50%; width: 40px; height: 40px; font-size: 18px; }
+.content { flex: 1; padding: 20px 30px; background: linear-gradient(to bottom, #1f1f1f, var(--bg-dark)); overflow-y: auto; }
 
-/* Estilo de Inputs */
-input { padding: 10px; border-radius: 20px; border: none; background: #333; color: white; width: 300px; }
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-dark); }
+::-webkit-scrollbar-thumb { background: #555; border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: #888; }
+
+/* --- TOP HEADER & SEARCH --- */
+.top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.search-bar { padding: 12px 20px; border-radius: 20px; border: none; background-color: #242424; color: white; width: 300px; outline: none; transition: background 0.3s; }
+.search-bar:focus { background-color: #333; border: 1px solid #555; }
+.user-badge { background-color: #000; padding: 8px 16px; border-radius: 20px; font-weight: bold; }
+
+/* --- GRID DE CANCIONES --- */
+.grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 24px; padding-bottom: 20px; }
+.song-card { background-color: #181818; padding: 16px; border-radius: 8px; cursor: pointer; transition: background 0.3s; }
+.song-card:hover { background-color: #282828; }
+.song-card h4 { margin: 0 0 8px 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.song-card p { margin: 0; color: var(--text-sub); font-size: 14px; }
+.song-card.playing { border: 1px solid var(--brand-green); background-color: #2a2a2a; }
+
+/* --- REPRODUCTOR FIJO --- */
+.player-bar { position: fixed; bottom: 0; left: 0; width: 100%; height: 90px; background-color: #181818; border-top: 1px solid #282828; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-sizing: border-box; }
+.now-playing { width: 30%; }
+.now-playing p { margin: 0; font-weight: bold; font-size: 14px; }
+.now-playing small { color: var(--text-sub); font-size: 12px; }
+.controls { width: 40%; display: flex; justify-content: center; align-items: center; gap: 20px; }
+.controls button { background: none; border: none; color: var(--text-sub); font-size: 20px; cursor: pointer; transition: 0.2s; }
+.controls button:hover { color: white; }
+.play-btn-main { background-color: white !important; color: black !important; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.play-btn-main:hover { transform: scale(1.1); }

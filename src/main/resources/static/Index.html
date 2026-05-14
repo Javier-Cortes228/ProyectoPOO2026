@@ -14,40 +14,57 @@
             <input type="email" id="login-correo" placeholder="Correo (ej: admin@ufro.cl)">
             <input type="password" id="login-contrasena" placeholder="Contraseña (ej: 1234)">
             <button onclick="iniciarSesion()">Entrar</button>
-            <p id="login-error" class="mensaje" style="color: red;"></p>
+            <p id="login-error" class="mensaje" style="color: #ff4d4d;"></p>
         </div>
     </div>
 </div>
 
 <div id="app-container" class="main-app" style="display: none;">
+
     <nav class="sidebar">
         <h2 style="color: #1DB954; margin-bottom: 30px;">BanduMusic</h2>
-        <ul style="list-style: none; padding: 0; line-height: 2;">
-            <li onclick="cargarCatalogo()" style="cursor: pointer;">🏠 Catálogo</li>
+        <ul>
+            <li onclick="cargarCatalogo()" class="active">🏠 Inicio</li>
         </ul>
+
+        <div style="margin-top: 30px; border-top: 1px solid #282828; padding-top: 20px;">
+            <h4 style="color: white; margin-bottom: 15px;">Tus Playlists</h4>
+
+            <input type="text" id="nombre-nueva-playlist" placeholder="Nueva playlist..." style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box;">
+
+            <button onclick="crearNuevaPlaylist()" style="width: 100%; padding: 8px; background-color: white; color: black; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; transition: transform 0.2s;">
+                + Crear
+            </button>
+
+            <ul id="lista-mis-playlists" style="margin-top: 20px; list-style: none; padding: 0;">
+            </ul>
+        </div>
     </nav>
 
     <main class="content">
-        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2>Explorar</h2>
-            <div id="user-info" style="font-weight: bold; color: #1DB954;"></div>
+        <header class="top-header">
+            <input type="text" id="busqueda" class="search-bar" placeholder="¿Qué quieres escuchar?" onkeyup="buscarMusica()">
+            <div id="user-info" class="user-badge"></div>
         </header>
 
+        <h3 style="margin-top: 20px;">Catálogo Completo</h3>
         <div id="lista-canciones" class="grid-container">
         </div>
     </main>
 
     <footer class="player-bar">
-        <div class="now-playing" style="width: 200px;">
-            <p id="track-title" style="margin: 0; font-weight: bold;">Selecciona una pista</p>
-            <small id="track-artist" style="color: gray;"></small>
+        <div class="now-playing">
+            <p id="track-title">Selecciona una pista</p>
+            <small id="track-artist">...</small>
         </div>
 
         <div class="controls">
-            <button id="play-pause-btn" onclick="togglePlay()">▶</button>
+            <button onclick="reproducirAnterior()">⏮</button>
+            <button id="play-pause-btn" class="play-btn-main" onclick="togglePlay()">▶</button>
+            <button onclick="reproducirSiguiente()">⏭</button>
         </div>
 
-        <audio id="audio-player"></audio>
+        <audio id="audio-player" onended="reproducirSiguiente()"></audio>
     </footer>
 </div>
 
