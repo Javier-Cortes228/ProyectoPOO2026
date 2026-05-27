@@ -10,7 +10,6 @@ En su primera versión, el enfoque está en las funcionalidades esenciales para 
 
 ## 👥 Integrantes del Equipo
 * **Javier Cortés**
-* **Victor Valenzuela**
 * **Carlos Ramirez**
 
 ## 🛠️ Stack Tecnológico
