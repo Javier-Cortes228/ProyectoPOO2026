@@ -16,7 +16,7 @@ En su primera versión, el enfoque está en las funcionalidades esenciales para 
 El proyecto está estructurado en 3 capas, utilizando las siguientes tecnologías:
 * **Backend:** Java + Spring Boot
 * **Base de Datos:** PostgreSQL
-* **Frontend:** Web Tradicional (HTML, CSS y JavaScript Vanilla)
+* **Frontend:** React + Vite
 
 ## 🚀 Funcionalidades Principales
 * Creación y gestión de cuentas de usuario.
