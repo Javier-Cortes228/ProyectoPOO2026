@@ -1,22 +1,30 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  agregarContenidoAPlaylist,
   buscarYoutube,
   cargarCatalogo,
   crearPlaylist,
   login,
   registrar
 } from './api/banduMusicApi.js';
+import AddMusicModal from './components/AddMusicModal.jsx';
+import AuthPanel from './components/AuthPanel.jsx';
+import CreatePlaylistModal from './components/CreatePlaylistModal.jsx';
+import MainContent from './components/MainContent.jsx';
+import PlayerBar from './components/PlayerBar.jsx';
+import Sidebar from './components/Sidebar.jsx';
 
 function App() {
   const [usuario, setUsuario] = useState(null);
   const [catalogo, setCatalogo] = useState([]);
-  const [busqueda, setBusqueda] = useState('');
+  const [activeView, setActiveView] = useState({ type: 'home' });
   const [pistaActual, setPistaActual] = useState(null);
   const [youtubeActual, setYoutubeActual] = useState(null);
   const [youtubeResultados, setYoutubeResultados] = useState([]);
-  const [youtubeQuery, setYoutubeQuery] = useState('');
+  const [favoritosIds, setFavoritosIds] = useState([]);
   const [mensaje, setMensaje] = useState('');
-  const [cargando, setCargando] = useState(false);
+  const [isCreatePlaylistOpen, setCreatePlaylistOpen] = useState(false);
+  const [isAddMusicOpen, setAddMusicOpen] = useState(false);
 
   useEffect(() => {
     if (!usuario) {
@@ -28,28 +36,59 @@ function App() {
       .catch((error) => setMensaje(error.message));
   }, [usuario]);
 
-  const catalogoFiltrado = useMemo(() => {
-    const filtro = busqueda.trim().toLowerCase();
-    if (!filtro) {
-      return catalogo;
+  useEffect(() => {
+    if (!usuario) {
+      setFavoritosIds([]);
+      return;
     }
 
-    return catalogo.filter((item) => {
-      const creador = item.artista || item.anfitrion || '';
-      return item.titulo.toLowerCase().includes(filtro) || creador.toLowerCase().includes(filtro);
-    });
-  }, [catalogo, busqueda]);
+    const stored = window.localStorage.getItem(favoritosStorageKey(usuario.id));
+    setFavoritosIds(stored ? JSON.parse(stored) : []);
+  }, [usuario?.id]);
 
-  async function handleLogin({ correo, contrasena }) {
+  useEffect(() => {
+    if (!usuario) {
+      return;
+    }
+
+    window.localStorage.setItem(favoritosStorageKey(usuario.id), JSON.stringify(favoritosIds));
+  }, [favoritosIds, usuario]);
+
+  const playlists = usuario?.playlist || [];
+
+  const activePlaylist = useMemo(() => {
+    if (activeView.type !== 'playlist') {
+      return null;
+    }
+    return playlists.find((playlist) => playlist.id === activeView.playlistId) || null;
+  }, [activeView, playlists]);
+
+  const favoritos = useMemo(() => {
+    const ids = new Set(favoritosIds);
+    return catalogo.filter((item) => ids.has(item.id));
+  }, [catalogo, favoritosIds]);
+
+  async function handleLogin(form) {
     setMensaje('');
-    const data = await login(correo, contrasena);
-    setUsuario(data);
+    const data = await login(form.correo, form.contrasena);
+    setUsuario(normalizarUsuario(data));
+    setActiveView({ type: 'home' });
   }
 
-  async function handleRegistro({ nombreUsuario, correo, contrasena }) {
+  async function handleRegistro(form) {
     setMensaje('');
-    const data = await registrar(nombreUsuario, correo, contrasena);
-    setUsuario(data);
+    const data = await registrar(form.nombreUsuario, form.correo, form.contrasena);
+    setUsuario(normalizarUsuario(data));
+    setActiveView({ type: 'home' });
+  }
+
+  function handleLogout() {
+    setUsuario(null);
+    setCatalogo([]);
+    setPistaActual(null);
+    setYoutubeActual(null);
+    setYoutubeResultados([]);
+    setActiveView({ type: 'home' });
   }
 
   async function handleCrearPlaylist(nombre) {
@@ -57,30 +96,51 @@ function App() {
       return;
     }
 
-    const nuevaPlaylist = await crearPlaylist(usuario.id, nombre);
-    setUsuario({
-      ...usuario,
-      playlist: [...usuario.playlist, nuevaPlaylist]
-    });
+    const nuevaPlaylist = normalizarPlaylist(await crearPlaylist(usuario.id, nombre));
+    setUsuario((actual) => ({
+      ...actual,
+      playlist: [...(actual.playlist || []), nuevaPlaylist]
+    }));
+    setActiveView({ type: 'playlist', playlistId: nuevaPlaylist.id });
+    setCreatePlaylistOpen(false);
   }
 
-  async function handleBuscarYoutube(event) {
-    event.preventDefault();
-    if (!youtubeQuery.trim()) {
+  async function handleAgregarMusica(contenidoIds) {
+    if (!activePlaylist || contenidoIds.length === 0) {
+      setAddMusicOpen(false);
       return;
     }
 
-    setCargando(true);
-    setMensaje('');
+    const existentes = new Set((activePlaylist.contenidos || []).map((item) => item.id));
+    const nuevosIds = contenidoIds.filter((id) => !existentes.has(id));
 
-    try {
-      const resultados = await buscarYoutube(youtubeQuery);
-      setYoutubeResultados(resultados);
-    } catch (error) {
-      setMensaje(error.message);
-    } finally {
-      setCargando(false);
-    }
+    await Promise.all(nuevosIds.map((id) => agregarContenidoAPlaylist(activePlaylist.id, id)));
+
+    const nuevosContenidos = catalogo.filter((item) => nuevosIds.includes(item.id));
+    setUsuario((actual) => ({
+      ...actual,
+      playlist: actual.playlist.map((playlist) => {
+        if (playlist.id !== activePlaylist.id) {
+          return playlist;
+        }
+
+        return {
+          ...playlist,
+          contenidos: [...(playlist.contenidos || []), ...nuevosContenidos],
+          duracionTotalSegundos: calcularDuracion([...(playlist.contenidos || []), ...nuevosContenidos])
+        };
+      })
+    }));
+    setAddMusicOpen(false);
+  }
+
+  function toggleFavorito(itemId) {
+    setFavoritosIds((actual) => {
+      if (actual.includes(itemId)) {
+        return actual.filter((id) => id !== itemId);
+      }
+      return [...actual, itemId];
+    });
   }
 
   function reproducirLocal(item) {
@@ -93,6 +153,12 @@ function App() {
     setYoutubeActual(video);
   }
 
+  async function handleBuscarYoutube(query) {
+    setMensaje('');
+    const resultados = await buscarYoutube(query);
+    setYoutubeResultados(resultados);
+  }
+
   if (!usuario) {
     return (
       <main className="auth-shell">
@@ -103,245 +169,83 @@ function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar usuario={usuario} onCrearPlaylist={handleCrearPlaylist} onError={setMensaje} />
+      <Sidebar
+        usuario={usuario}
+        playlists={playlists}
+        favoritos={favoritos}
+        activeView={activeView}
+        onGoHome={() => setActiveView({ type: 'home' })}
+        onOpenPlaylist={(playlistId) => setActiveView({ type: 'playlist', playlistId })}
+        onOpenFavorites={() => setActiveView({ type: 'favorites' })}
+        onCreatePlaylist={() => setCreatePlaylistOpen(true)}
+        onPlay={reproducirLocal}
+      />
 
-      <main className="content">
-        <header className="topbar">
-          <input
-            className="search-input"
-            value={busqueda}
-            onChange={(event) => setBusqueda(event.target.value)}
-            placeholder="Buscar en catalogo local"
-          />
-          <button className="ghost-button" onClick={() => setUsuario(null)}>Salir</button>
-        </header>
+      <MainContent
+        activeView={activeView}
+        activePlaylist={activePlaylist}
+        catalogo={catalogo}
+        favoritos={favoritos}
+        favoritosIds={favoritosIds}
+        mensaje={mensaje}
+        pistaActual={pistaActual}
+        youtubeActual={youtubeActual}
+        youtubeResultados={youtubeResultados}
+        onClearMessage={() => setMensaje('')}
+        onError={setMensaje}
+        onPlayLocal={reproducirLocal}
+        onPlayYoutube={reproducirYoutube}
+        onToggleFavorito={toggleFavorito}
+        onAddMusic={() => setAddMusicOpen(true)}
+        onBuscarYoutube={handleBuscarYoutube}
+        onLogout={handleLogout}
+      />
 
-        {mensaje && <div className="status-message">{mensaje}</div>}
+      <PlayerBar
+        pista={pistaActual}
+        youtubeVideo={youtubeActual}
+        queue={activeView.type === 'favorites' ? favoritos : catalogo}
+        onPlayLocal={reproducirLocal}
+      />
 
-        <section className="section-block">
-          <div className="section-heading">
-            <div>
-              <p>Biblioteca local</p>
-              <h1>Catalogo BanduMusic</h1>
-            </div>
-            <span>{catalogoFiltrado.length} resultados</span>
-          </div>
+      <CreatePlaylistModal
+        open={isCreatePlaylistOpen}
+        onCancel={() => setCreatePlaylistOpen(false)}
+        onAccept={handleCrearPlaylist}
+      />
 
-          <div className="track-grid">
-            {catalogoFiltrado.map((item) => (
-              <TrackCard
-                key={item.id}
-                item={item}
-                active={pistaActual?.id === item.id}
-                onPlay={() => reproducirLocal(item)}
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="section-block">
-          <div className="section-heading">
-            <div>
-              <p>Proveedor externo</p>
-              <h2>YouTube</h2>
-            </div>
-          </div>
-
-          <form className="youtube-search" onSubmit={handleBuscarYoutube}>
-            <input
-              value={youtubeQuery}
-              onChange={(event) => setYoutubeQuery(event.target.value)}
-              placeholder="Buscar videos oficiales o contenido permitido"
-            />
-            <button disabled={cargando}>{cargando ? 'Buscando...' : 'Buscar'}</button>
-          </form>
-
-          <div className="youtube-list">
-            {youtubeResultados.map((video) => (
-              <button
-                className={`youtube-item ${youtubeActual?.videoId === video.videoId ? 'active' : ''}`}
-                key={video.videoId}
-                onClick={() => reproducirYoutube(video)}
-              >
-                <img src={video.thumbnailUrl} alt="" />
-                <span>
-                  <strong>{video.titulo}</strong>
-                  <small>{video.canal}</small>
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-      </main>
-
-      <PlayerBar pista={pistaActual} youtubeVideo={youtubeActual} catalogo={catalogo} onPlayLocal={reproducirLocal} />
+      <AddMusicModal
+        open={isAddMusicOpen}
+        catalogo={catalogo}
+        playlist={activePlaylist}
+        onCancel={() => setAddMusicOpen(false)}
+        onAccept={handleAgregarMusica}
+      />
     </div>
   );
 }
 
-function AuthPanel({ onLogin, onRegistro, mensaje }) {
-  const [modo, setModo] = useState('login');
-  const [form, setForm] = useState({
-    nombreUsuario: '',
-    correo: 'admin@ufro.cl',
-    contrasena: '1234'
-  });
-  const [error, setError] = useState('');
-
-  async function submit(event) {
-    event.preventDefault();
-    setError('');
-
-    try {
-      if (modo === 'login') {
-        await onLogin(form);
-      } else {
-        await onRegistro(form);
-      }
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
-  function update(field, value) {
-    setForm({ ...form, [field]: value });
-  }
-
-  return (
-    <form className="auth-card" onSubmit={submit}>
-      <div>
-        <p>Streaming academico</p>
-        <h1>BanduMusic</h1>
-      </div>
-
-      <div className="mode-switch">
-        <button type="button" className={modo === 'login' ? 'active' : ''} onClick={() => setModo('login')}>Login</button>
-        <button type="button" className={modo === 'registro' ? 'active' : ''} onClick={() => setModo('registro')}>Registro</button>
-      </div>
-
-      {modo === 'registro' && (
-        <label>
-          Nombre
-          <input value={form.nombreUsuario} onChange={(event) => update('nombreUsuario', event.target.value)} />
-        </label>
-      )}
-
-      <label>
-        Correo
-        <input type="email" value={form.correo} onChange={(event) => update('correo', event.target.value)} />
-      </label>
-
-      <label>
-        Contrasena
-        <input type="password" value={form.contrasena} onChange={(event) => update('contrasena', event.target.value)} />
-      </label>
-
-      {(error || mensaje) && <div className="form-error">{error || mensaje}</div>}
-
-      <button className="primary-button">{modo === 'login' ? 'Entrar' : 'Crear cuenta'}</button>
-    </form>
-  );
+function favoritosStorageKey(usuarioId) {
+  return `bandumusic:favoritos:${usuarioId}`;
 }
 
-function Sidebar({ usuario, onCrearPlaylist, onError }) {
-  const [nombre, setNombre] = useState('');
-
-  async function submit(event) {
-    event.preventDefault();
-    if (!nombre.trim()) {
-      return;
-    }
-
-    try {
-      await onCrearPlaylist(nombre);
-      setNombre('');
-    } catch (error) {
-      onError(error.message);
-    }
-  }
-
-  return (
-    <aside className="sidebar">
-      <div>
-        <h2>BanduMusic</h2>
-        <p>{usuario.nombreUsuario}</p>
-      </div>
-
-      <form className="playlist-form" onSubmit={submit}>
-        <label>Nueva playlist</label>
-        <input value={nombre} onChange={(event) => setNombre(event.target.value)} placeholder="Nombre" />
-        <button>Crear</button>
-      </form>
-
-        <nav className="playlist-list">
-            {(usuario.playlist || []).map((playlist) => (
-                <button key={playlist.id}>
-                    <span>{playlist.nombre}</span>
-                    <small>{(playlist.contenidos || []).length} pistas</small>
-                </button>
-            ))}
-        </nav>
-    </aside>
-  );
+function normalizarUsuario(usuario) {
+  return {
+    ...usuario,
+    playlist: (usuario.playlist || []).map(normalizarPlaylist)
+  };
 }
 
-function TrackCard({ item, active, onPlay }) {
-  const creador = item.artista || item.anfitrion || 'Sin autor';
-
-  return (
-    <button className={`track-card ${active ? 'active' : ''}`} onClick={onPlay}>
-      <span className="track-type">{item.tipo}</span>
-      <strong>{item.titulo}</strong>
-      <small>{creador}</small>
-    </button>
-  );
+function normalizarPlaylist(playlist) {
+  return {
+    ...playlist,
+    contenidos: playlist.contenidos || [],
+    duracionTotalSegundos: playlist.duracionTotalSegundos || 0
+  };
 }
 
-function PlayerBar({ pista, youtubeVideo, catalogo, onPlayLocal }) {
-  const currentIndex = pista ? catalogo.findIndex((item) => item.id === pista.id) : -1;
-
-  function previous() {
-    if (currentIndex > 0) {
-      onPlayLocal(catalogo[currentIndex - 1]);
-    }
-  }
-
-  function next() {
-    if (currentIndex >= 0 && currentIndex < catalogo.length - 1) {
-      onPlayLocal(catalogo[currentIndex + 1]);
-    }
-  }
-
-  return (
-    <footer className="player-bar">
-      <div className="player-meta">
-        <strong>{pista?.titulo || youtubeVideo?.titulo || 'Selecciona contenido'}</strong>
-        <small>{pista ? (pista.artista || pista.anfitrion) : youtubeVideo?.canal || 'Catalogo local o YouTube'}</small>
-      </div>
-
-      {pista && (
-        <div className="local-player">
-          <button onClick={previous} disabled={currentIndex <= 0}>Anterior</button>
-            <audio
-                controls
-                autoPlay
-                src={`http://localhost:8080/audio/${pista.id}.mp3`}
-            />
-          <button onClick={next} disabled={currentIndex < 0 || currentIndex >= catalogo.length - 1}>Siguiente</button>
-        </div>
-      )}
-
-      {youtubeVideo && (
-        <iframe
-          className="youtube-player"
-          title={youtubeVideo.titulo}
-          src={`https://www.youtube.com/embed/${youtubeVideo.videoId}?autoplay=1&origin=${window.location.origin}`}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-        />
-      )}
-    </footer>
-  );
+function calcularDuracion(items) {
+  return items.reduce((total, item) => total + (item.duracionSegundos || 0), 0);
 }
 
 export default App;

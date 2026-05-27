@@ -52,6 +52,12 @@ export function crearPlaylist(usuarioId, nombre) {
   });
 }
 
+export function agregarContenidoAPlaylist(playlistId, contenidoId) {
+  return request(`/api/playlists/${encodeURIComponent(playlistId)}/agregar/${encodeURIComponent(contenidoId)}`, {
+    method: 'POST'
+  });
+}
+
 export function buscarYoutube(query) {
   return request(`/api/youtube/buscar?query=${encodeURIComponent(query)}`);
 }
