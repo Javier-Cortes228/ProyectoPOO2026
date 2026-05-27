@@ -1,10 +1,61 @@
 ### IntelliJ IDEA ###
 .idea/
 *.iml
+out/
 
-### Maven / Java ###
+### Java / Maven / Gradle ###
 target/
+build/
+.gradle/
+*.class
+*.jar
+*.war
+*.ear
 
-### Frontend / Vite ###
+### Logs ###
+logs/
+*.log
+
+### OS Files ###
+.DS_Store
+Thumbs.db
+
+### Environment / Secrets ###
+.env
+.env.*
+application.properties
+application-secret.properties
+secret.properties
+
+### VSCode ###
+.vscode/
+
+### Frontend / Node / Vite ###
+node_modules/
+dist/
 frontend/node_modules/
 frontend/dist/
+
+### Package Managers ###
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+### Temporary Files ###
+tmp/
+temp/
+*.tmp
+
+### Coverage ###
+coverage/
+
+### Cache ###
+.cache/
+
+### Database Local Files ###
+*.db
+*.sqlite
+*.sqlite3
+
+### Generated Files ###
+generated/
