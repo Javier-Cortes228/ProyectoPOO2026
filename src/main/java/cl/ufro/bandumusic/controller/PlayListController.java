@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,5 +44,14 @@ public class PlayListController {
     ) {
         playListService.agregarContenido(playlistId, contenidoId);
         return ResponseEntity.ok(new MensajeResponse("Contenido agregado exitosamente."));
+    }
+
+    @DeleteMapping("/{playlistId}/contenidos/{contenidoId}")
+    public ResponseEntity<MensajeResponse> removerContenido(
+            @PathVariable @NotBlank(message = "El id de la playlist es obligatorio.") String playlistId,
+            @PathVariable @NotBlank(message = "El id del contenido es obligatorio.") String contenidoId
+    ) {
+        playListService.removerContenido(playlistId, contenidoId);
+        return ResponseEntity.ok(new MensajeResponse("Contenido removido exitosamente."));
     }
 }

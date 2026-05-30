@@ -5,7 +5,8 @@ import {
   cargarCatalogo,
   crearPlaylist,
   login,
-  registrar
+  registrar,
+  removerContenidoDePlaylist
 } from './api/banduMusicApi.js';
 import AddMusicModal from './components/AddMusicModal.jsx';
 import AuthPanel from './components/AuthPanel.jsx';
@@ -21,7 +22,6 @@ function App() {
   const [pistaActual, setPistaActual] = useState(null);
   const [youtubeActual, setYoutubeActual] = useState(null);
   const [youtubeResultados, setYoutubeResultados] = useState([]);
-  const [favoritosIds, setFavoritosIds] = useState([]);
   const [mensaje, setMensaje] = useState('');
   const [isCreatePlaylistOpen, setCreatePlaylistOpen] = useState(false);
   const [isAddMusicOpen, setAddMusicOpen] = useState(false);
@@ -36,25 +36,13 @@ function App() {
       .catch((error) => setMensaje(error.message));
   }, [usuario]);
 
-  useEffect(() => {
-    if (!usuario) {
-      setFavoritosIds([]);
-      return;
-    }
-
-    const stored = window.localStorage.getItem(favoritosStorageKey(usuario.id));
-    setFavoritosIds(stored ? JSON.parse(stored) : []);
-  }, [usuario?.id]);
-
-  useEffect(() => {
-    if (!usuario) {
-      return;
-    }
-
-    window.localStorage.setItem(favoritosStorageKey(usuario.id), JSON.stringify(favoritosIds));
-  }, [favoritosIds, usuario]);
-
   const playlists = usuario?.playlist || [];
+  const playlistFavoritos = useMemo(() => {
+    return playlists.find((playlist) => esPlaylistFavoritos(playlist)) || null;
+  }, [playlists]);
+  const playlistsVisibles = useMemo(() => {
+    return playlists.filter((playlist) => !esPlaylistFavoritos(playlist));
+  }, [playlists]);
 
   const activePlaylist = useMemo(() => {
     if (activeView.type !== 'playlist') {
@@ -64,9 +52,10 @@ function App() {
   }, [activeView, playlists]);
 
   const favoritos = useMemo(() => {
-    const ids = new Set(favoritosIds);
-    return catalogo.filter((item) => ids.has(item.id));
-  }, [catalogo, favoritosIds]);
+    return playlistFavoritos?.contenidos || [];
+  }, [playlistFavoritos]);
+
+  const favoritosIds = useMemo(() => favoritos.map((item) => item.id), [favoritos]);
 
   async function handleLogin(form) {
     setMensaje('');
@@ -134,13 +123,51 @@ function App() {
     setAddMusicOpen(false);
   }
 
-  function toggleFavorito(itemId) {
-    setFavoritosIds((actual) => {
-      if (actual.includes(itemId)) {
-        return actual.filter((id) => id !== itemId);
+  function actualizarPlaylist(playlistId, actualizar) {
+    setUsuario((actual) => ({
+      ...actual,
+      playlist: (actual.playlist || []).map((playlist) => (
+        playlist.id === playlistId ? actualizar(playlist) : playlist
+      ))
+    }));
+  }
+
+  async function toggleFavorito(itemId) {
+    if (!playlistFavoritos) {
+      setMensaje('No existe una playlist de Favoritos para este usuario.');
+      return;
+    }
+
+    const yaEsFavorito = favoritosIds.includes(itemId);
+
+    try {
+      if (yaEsFavorito) {
+        await removerContenidoDePlaylist(playlistFavoritos.id, itemId);
+        actualizarPlaylist(playlistFavoritos.id, (playlist) => ({
+          ...playlist,
+          contenidos: (playlist.contenidos || []).filter((item) => item.id !== itemId),
+          duracionTotalSegundos: calcularDuracion((playlist.contenidos || []).filter((item) => item.id !== itemId))
+        }));
+        return;
       }
-      return [...actual, itemId];
-    });
+
+      await agregarContenidoAPlaylist(playlistFavoritos.id, itemId);
+      const contenido = catalogo.find((item) => item.id === itemId);
+      if (!contenido) {
+        return;
+      }
+
+      actualizarPlaylist(playlistFavoritos.id, (playlist) => {
+        const contenidos = [...(playlist.contenidos || []), contenido];
+        return {
+          ...playlist,
+          contenidos,
+          duracionTotalSegundos: calcularDuracion(contenidos)
+        };
+      });
+    } catch (error) {
+      setMensaje(error.message);
+    }
   }
 
   function reproducirLocal(item) {
@@ -171,7 +198,7 @@ function App() {
     <div className="app-shell">
       <Sidebar
         usuario={usuario}
-        playlists={playlists}
+        playlists={playlistsVisibles}
         favoritos={favoritos}
         activeView={activeView}
         onGoHome={() => setActiveView({ type: 'home' })}
@@ -225,10 +252,6 @@ function App() {
   );
 }
 
-function favoritosStorageKey(usuarioId) {
-  return `bandumusic:favoritos:${usuarioId}`;
-}
-
 function normalizarUsuario(usuario) {
   return {
     ...usuario,
@@ -246,6 +269,10 @@ function normalizarPlaylist(playlist) {
 
 function calcularDuracion(items) {
   return items.reduce((total, item) => total + (item.duracionSegundos || 0), 0);
+}
+
+function esPlaylistFavoritos(playlist) {
+  return playlist?.nombre?.trim().toLowerCase() === 'favoritos';
 }
 
 export default App;

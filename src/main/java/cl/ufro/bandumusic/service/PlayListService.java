@@ -29,7 +29,7 @@ public class PlayListService {
 
     @Transactional
     public PlayList crearPlaylist(String usuarioId, String nombre) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
+        Usuario usuario = usuarioRepository.findWithPlaylistById(usuarioId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado."));
 
         PlayList nuevaLista = usuario.crearPlaylist(nombre);
@@ -46,6 +46,15 @@ public class PlayListService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Contenido no encontrado."));
 
         lista.agregarContenido(audio);
+        playListRepository.save(lista);
+    }
+
+    @Transactional
+    public void removerContenido(String playlistId, String contenidoId) {
+        PlayList lista = playListRepository.findById(playlistId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Playlist no encontrada."));
+
+        lista.removerContenido(contenidoId);
         playListRepository.save(lista);
     }
 }

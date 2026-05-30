@@ -40,6 +40,12 @@ public class PlayList {
             throw new PlaylistLlenaException("La playlist ha alcanzado su limite de 300 pistas.");
         }
 
+        boolean yaExiste = this.contenidos.stream()
+                .anyMatch(audio -> audio.getId().equals(contenido.getId()));
+        if (yaExiste) {
+            return;
+        }
+
         this.contenidos.add(contenido);
     }
 

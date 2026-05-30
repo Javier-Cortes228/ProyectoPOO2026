@@ -39,7 +39,9 @@ public class UsuarioService {
                 passwordEncoder.encode(request.contrasena())
         );
 
-        return usuarioRepository.save(usuario);
+        Usuario usuarioGuardado = usuarioRepository.save(usuario);
+        cargarPlaylists(usuarioGuardado);
+        return usuarioGuardado;
     }
 
     @Transactional
@@ -49,13 +51,16 @@ public class UsuarioService {
                 .orElseThrow(() -> new CredencialesInvalidasException("Credenciales incorrectas."));
 
         if (passwordEncoder.matches(request.contrasena(), usuario.getContrasena())) {
+            cargarPlaylists(usuario);
             return usuario;
         }
 
         // Compatibilidad: permite iniciar sesion con usuarios antiguos y migra su contrasena a BCrypt.
         if (!esHashBCrypt(usuario.getContrasena()) && usuario.verificarCredenciales(correoNormalizado, request.contrasena())) {
             usuario.setContrasena(passwordEncoder.encode(request.contrasena()));
-            return usuarioRepository.save(usuario);
+            Usuario usuarioMigrado = usuarioRepository.save(usuario);
+            cargarPlaylists(usuarioMigrado);
+            return usuarioMigrado;
         }
 
         throw new CredencialesInvalidasException("Credenciales incorrectas.");
@@ -67,5 +72,9 @@ public class UsuarioService {
 
     private boolean esHashBCrypt(String contrasenaGuardada) {
         return contrasenaGuardada != null && contrasenaGuardada.matches("^\\$2[aby]\\$.{56}$");
+    }
+
+    private void cargarPlaylists(Usuario usuario) {
+        usuario.getPlaylist().forEach(playlist -> playlist.getContenidos().size());
     }
 }

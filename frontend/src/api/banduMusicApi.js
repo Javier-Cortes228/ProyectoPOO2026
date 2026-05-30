@@ -58,6 +58,12 @@ export function agregarContenidoAPlaylist(playlistId, contenidoId) {
   });
 }
 
+export function removerContenidoDePlaylist(playlistId, contenidoId) {
+  return request(`/api/playlists/${encodeURIComponent(playlistId)}/contenidos/${encodeURIComponent(contenidoId)}`, {
+    method: 'DELETE'
+  });
+}
+
 export function buscarYoutube(query) {
   return request(`/api/youtube/buscar?query=${encodeURIComponent(query)}`);
 }

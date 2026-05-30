@@ -54,7 +54,7 @@ function AuthPanel({ onLogin, onRegistro, mensaje }) {
 
       <label>
         Contrasena
-        <input type="password" value={form.contrasena} onChange={(event) => update('contraseña', event.target.value)} />
+        <input type="password" value={form.contrasena} onChange={(event) => update('contrasena', event.target.value)} />
       </label>
 
       {(error || mensaje) && <div className="form-error">{error || mensaje}</div>}
