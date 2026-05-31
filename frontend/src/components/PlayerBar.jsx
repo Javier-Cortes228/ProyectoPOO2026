@@ -1,4 +1,4 @@
-function PlayerBar({ pista, youtubeVideo, queue, onPlayLocal }) {
+function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal }) {
   const currentIndex = pista ? queue.findIndex((item) => item.id === pista.id) : -1;
 
   function previous() {
@@ -16,8 +16,8 @@ function PlayerBar({ pista, youtubeVideo, queue, onPlayLocal }) {
   return (
     <footer className="player-bar glass-panel">
       <div className="player-meta">
-        <strong>{pista?.titulo || youtubeVideo?.titulo || 'Selecciona contenido'}</strong>
-        <small>{pista ? (pista.artista || pista.anfitrion) : youtubeVideo?.canal || 'Catálogo local o YouTube'}</small>
+        <strong>{pista?.titulo || jamendoTrack?.titulo || 'Selecciona contenido'}</strong>
+        <small>{pista ? (pista.artista || pista.anfitrion) : jamendoTrack?.artista || 'Catalogo local o Jamendo'}</small>
       </div>
 
       {pista && (
@@ -28,14 +28,11 @@ function PlayerBar({ pista, youtubeVideo, queue, onPlayLocal }) {
         </div>
       )}
 
-      {youtubeVideo && (
-        <iframe
-          className="youtube-player"
-          title={youtubeVideo.titulo}
-          src={`https://www.youtube.com/embed/${youtubeVideo.videoId}?autoplay=1&origin=${window.location.origin}`}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-        />
+      {jamendoTrack && (
+        <div className="external-player">
+          <audio controls autoPlay src={jamendoTrack.audioUrl} />
+          <a href={jamendoTrack.jamendoUrl} target="_blank" rel="noreferrer">Ver en Jamendo</a>
+        </div>
       )}
     </footer>
   );

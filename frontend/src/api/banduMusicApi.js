@@ -64,6 +64,6 @@ export function removerContenidoDePlaylist(playlistId, contenidoId) {
   });
 }
 
-export function buscarYoutube(query) {
-  return request(`/api/youtube/buscar?query=${encodeURIComponent(query)}`);
+export function buscarJamendo(query) {
+  return request(`/api/jamendo/buscar?query=${encodeURIComponent(query)}`);
 }

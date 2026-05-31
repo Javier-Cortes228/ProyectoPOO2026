@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   agregarContenidoAPlaylist,
-  buscarYoutube,
+  buscarJamendo,
   cargarCatalogo,
   crearPlaylist,
   login,
@@ -20,8 +20,8 @@ function App() {
   const [catalogo, setCatalogo] = useState([]);
   const [activeView, setActiveView] = useState({ type: 'home' });
   const [pistaActual, setPistaActual] = useState(null);
-  const [youtubeActual, setYoutubeActual] = useState(null);
-  const [youtubeResultados, setYoutubeResultados] = useState([]);
+  const [jamendoActual, setJamendoActual] = useState(null);
+  const [jamendoResultados, setJamendoResultados] = useState([]);
   const [mensaje, setMensaje] = useState('');
   const [isCreatePlaylistOpen, setCreatePlaylistOpen] = useState(false);
   const [isAddMusicOpen, setAddMusicOpen] = useState(false);
@@ -75,8 +75,8 @@ function App() {
     setUsuario(null);
     setCatalogo([]);
     setPistaActual(null);
-    setYoutubeActual(null);
-    setYoutubeResultados([]);
+    setJamendoActual(null);
+    setJamendoResultados([]);
     setActiveView({ type: 'home' });
   }
 
@@ -171,19 +171,19 @@ function App() {
   }
 
   function reproducirLocal(item) {
-    setYoutubeActual(null);
+    setJamendoActual(null);
     setPistaActual(item);
   }
 
-  function reproducirYoutube(video) {
+  function reproducirJamendo(track) {
     setPistaActual(null);
-    setYoutubeActual(video);
+    setJamendoActual(track);
   }
 
-  async function handleBuscarYoutube(query) {
+  async function handleBuscarJamendo(query) {
     setMensaje('');
-    const resultados = await buscarYoutube(query);
-    setYoutubeResultados(resultados);
+    const resultados = await buscarJamendo(query);
+    setJamendoResultados(resultados);
   }
 
   if (!usuario) {
@@ -216,21 +216,21 @@ function App() {
         favoritosIds={favoritosIds}
         mensaje={mensaje}
         pistaActual={pistaActual}
-        youtubeActual={youtubeActual}
-        youtubeResultados={youtubeResultados}
+        jamendoActual={jamendoActual}
+        jamendoResultados={jamendoResultados}
         onClearMessage={() => setMensaje('')}
         onError={setMensaje}
         onPlayLocal={reproducirLocal}
-        onPlayYoutube={reproducirYoutube}
+        onPlayJamendo={reproducirJamendo}
         onToggleFavorito={toggleFavorito}
         onAddMusic={() => setAddMusicOpen(true)}
-        onBuscarYoutube={handleBuscarYoutube}
+        onBuscarJamendo={handleBuscarJamendo}
         onLogout={handleLogout}
       />
 
       <PlayerBar
         pista={pistaActual}
-        youtubeVideo={youtubeActual}
+        jamendoTrack={jamendoActual}
         queue={activeView.type === 'favorites' ? favoritos : catalogo}
         onPlayLocal={reproducirLocal}
       />

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
+import JamendoSection from './JamendoSection.jsx';
 import PlaylistView from './PlaylistView.jsx';
 import TrackCard from './TrackCard.jsx';
-import YoutubeSection from './YoutubeSection.jsx';
 
 function MainContent({
   activeView,
@@ -11,18 +11,19 @@ function MainContent({
   favoritosIds,
   mensaje,
   pistaActual,
-  youtubeActual,
-  youtubeResultados,
+  jamendoActual,
+  jamendoResultados,
   onClearMessage,
   onError,
   onPlayLocal,
-  onPlayYoutube,
+  onPlayJamendo,
   onToggleFavorito,
   onAddMusic,
-  onBuscarYoutube,
+  onBuscarJamendo,
   onLogout
 }) {
   const [busqueda, setBusqueda] = useState('');
+  const [catalogoActivo, setCatalogoActivo] = useState('local');
 
   const catalogoFiltrado = useMemo(() => {
     const filtro = busqueda.trim().toLowerCase();
@@ -75,22 +76,27 @@ function MainContent({
       <Topbar busqueda={busqueda} setBusqueda={setBusqueda} onLogout={onLogout} />
       <Message mensaje={mensaje} onClear={onClearMessage} />
       <HeroStats total={catalogo.length} favoritos={favoritos.length} />
-      <LibrarySection
-        title="Catálogo BanduMusic"
-        subtitle="Biblioteca local"
-        items={catalogoFiltrado}
-        favoriteSet={favoriteSet}
-        pistaActual={pistaActual}
-        onPlay={onPlayLocal}
-        onToggleFavorito={onToggleFavorito}
-      />
-      <YoutubeSection
-        resultados={youtubeResultados}
-        activeVideoId={youtubeActual?.videoId}
-        onBuscar={onBuscarYoutube}
-        onPlay={onPlayYoutube}
-        onError={onError}
-      />
+      <CatalogSwitch active={catalogoActivo} onChange={setCatalogoActivo} />
+
+      {catalogoActivo === 'local' ? (
+        <LibrarySection
+          title="Catalogo local BanduMusic"
+          subtitle="Biblioteca local persistida"
+          items={catalogoFiltrado}
+          favoriteSet={favoriteSet}
+          pistaActual={pistaActual}
+          onPlay={onPlayLocal}
+          onToggleFavorito={onToggleFavorito}
+        />
+      ) : (
+        <JamendoSection
+          resultados={jamendoResultados}
+          activeTrackId={jamendoActual?.id}
+          onBuscar={onBuscarJamendo}
+          onPlay={onPlayJamendo}
+          onError={onError}
+        />
+      )}
     </main>
   );
 }
@@ -106,6 +112,19 @@ function Topbar({ busqueda, setBusqueda, onLogout }) {
       />
       <button className="ghost-button" onClick={onLogout}>Salir</button>
     </header>
+  );
+}
+
+function CatalogSwitch({ active, onChange }) {
+  return (
+    <div className="catalog-switch glass-panel" role="tablist" aria-label="Selector de catalogo">
+      <button type="button" className={active === 'local' ? 'active' : ''} onClick={() => onChange('local')}>
+        Catalogo local
+      </button>
+      <button type="button" className={active === 'online' ? 'active' : ''} onClick={() => onChange('online')}>
+        Catalogo online
+      </button>
+    </div>
   );
 }
 

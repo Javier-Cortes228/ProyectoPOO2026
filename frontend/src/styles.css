@@ -114,7 +114,7 @@ input {
 .search-input,
 .add-music-filters input,
 .modal-form input,
-.youtube-search input {
+.online-search input {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -129,7 +129,7 @@ input {
 .search-input:focus,
 .add-music-filters input:focus,
 .modal-form input:focus,
-.youtube-search input:focus {
+.online-search input:focus {
   border-color: rgba(30, 215, 96, 0.8);
   box-shadow: 0 0 0 4px rgba(30, 215, 96, 0.12);
   background: rgba(10, 13, 20, 0.96);
@@ -149,7 +149,9 @@ input {
 .ghost-button,
 .primary-button,
 .create-playlist-button,
-.youtube-search button {
+.online-search button,
+.catalog-switch button,
+.quick-searches button {
   border: 1px solid var(--line);
   border-radius: 12px;
   color: var(--text);
@@ -162,7 +164,9 @@ input {
 .ghost-button:hover,
 .primary-button:hover,
 .create-playlist-button:hover,
-.youtube-search button:hover {
+.online-search button:hover,
+.catalog-switch button:hover,
+.quick-searches button:hover {
   transform: translateY(-1px);
   border-color: var(--line-strong);
 }
@@ -170,7 +174,8 @@ input {
 .mode-switch button.active,
 .primary-button,
 .create-playlist-button,
-.youtube-search button {
+.online-search button,
+.catalog-switch button.active {
   border-color: transparent;
   color: #041008;
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
@@ -303,7 +308,8 @@ input {
 .favorite-list small,
 .playlist-list small,
 .track-card small,
-.youtube-item small,
+.online-track small,
+.online-track em,
 .player-meta small {
   color: var(--muted);
 }
@@ -437,7 +443,6 @@ input {
 }
 
 .track-card strong,
-.youtube-item strong,
 .player-meta strong {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -475,21 +480,45 @@ input {
   animation: heartPop 0.28s ease;
 }
 
-.youtube-search {
+.catalog-switch {
+  width: fit-content;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  border-radius: 18px;
+  padding: 6px;
+}
+
+.catalog-switch button {
+  min-width: 150px;
+}
+
+.online-search {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
 }
 
-.youtube-list {
+.quick-searches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-searches button {
+  padding: 8px 12px;
+  color: var(--muted-strong);
+}
+
+.online-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   gap: 12px;
 }
 
-.youtube-item {
+.online-track {
   display: grid;
-  grid-template-columns: 116px 1fr;
+  grid-template-columns: 86px 1fr;
   gap: 12px;
   text-align: left;
   border-radius: 18px;
@@ -498,20 +527,36 @@ input {
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
-.youtube-item.active,
-.youtube-item:hover {
+.online-track.active,
+.online-track:hover {
   transform: translateY(-2px);
   border-color: rgba(30, 215, 96, 0.45);
 }
 
-.youtube-item img {
-  width: 116px;
-  aspect-ratio: 16 / 9;
+.online-track img {
+  width: 86px;
+  aspect-ratio: 1;
   object-fit: cover;
   border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.youtube-item span,
+.online-track span {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.online-track strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.online-track em {
+  font-style: normal;
+  font-size: 12px;
+}
+
 .player-meta,
 .add-music-row span {
   min-width: 0;
@@ -541,7 +586,8 @@ input {
   gap: 12px;
 }
 
-.local-player audio {
+.local-player audio,
+.external-player audio {
   width: min(520px, 48vw);
 }
 
@@ -558,11 +604,19 @@ input {
   opacity: 0.45;
 }
 
-.youtube-player {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border: 1px solid var(--line);
-  border-radius: 16px;
+.external-player {
+  grid-column: 2 / 4;
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 14px;
+}
+
+.external-player a {
+  color: var(--accent-2);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
 }
 
 .modal-backdrop {
@@ -700,7 +754,8 @@ input {
   }
 
   .local-player,
-  .youtube-search,
+  .external-player,
+  .online-search,
   .add-music-filters,
   .hero-band,
   .playlist-hero {
@@ -710,8 +765,12 @@ input {
   }
 
   .local-player audio,
-  .youtube-player {
+  .external-player audio {
     width: 100%;
+  }
+
+  .external-player {
+    grid-column: auto;
   }
 }
 
@@ -732,11 +791,13 @@ input {
     flex-direction: column;
   }
 
-  .youtube-item {
-    grid-template-columns: 1fr;
+  .online-track img {
+    width: 100%;
   }
 
-  .youtube-item img {
+  .catalog-switch,
+  .online-track {
+    grid-template-columns: 1fr;
     width: 100%;
   }
 }
