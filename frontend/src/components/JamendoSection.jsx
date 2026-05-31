@@ -2,9 +2,10 @@ import { useState } from 'react';
 
 const QUICK_SEARCHES = ['rock', 'electronic', 'jazz', 'relaxation'];
 
-function JamendoSection({ resultados, activeTrackId, onBuscar, onPlay, onError }) {
+function JamendoSection({ resultados, activeTrackId, currentQuery, hasMore, onBuscar, onPlay, onPreload, onError }) {
   const [query, setQuery] = useState('');
   const [cargando, setCargando] = useState(false);
+  const [cargandoMas, setCargandoMas] = useState(false);
 
   async function submit(event) {
     event.preventDefault();
@@ -24,6 +25,22 @@ function JamendoSection({ resultados, activeTrackId, onBuscar, onPlay, onError }
       onError(error.message);
     } finally {
       setCargando(false);
+    }
+  }
+
+  async function cargarMas() {
+    const termino = currentQuery || query.trim();
+    if (!termino) {
+      return;
+    }
+
+    setCargandoMas(true);
+    try {
+      await onBuscar(termino, true);
+    } catch (error) {
+      onError(error.message);
+    } finally {
+      setCargandoMas(false);
     }
   }
 
@@ -66,6 +83,8 @@ function JamendoSection({ resultados, activeTrackId, onBuscar, onPlay, onError }
           <button
             className={`online-track glass-panel ${activeTrackId === track.id ? 'active' : ''}`}
             key={track.id}
+            onFocus={() => onPreload(track)}
+            onMouseEnter={() => onPreload(track)}
             onClick={() => onPlay(track)}
           >
             <img src={track.imagenUrl} alt="" />
@@ -82,6 +101,12 @@ function JamendoSection({ resultados, activeTrackId, onBuscar, onPlay, onError }
         <p className="empty-state">
           Busca musica en Jamendo para reproducir contenido online sin modificar tu catalogo local.
         </p>
+      )}
+
+      {resultados.length > 0 && hasMore && (
+        <button className="load-more-button" type="button" disabled={cargandoMas} onClick={cargarMas}>
+          {cargandoMas ? 'Cargando...' : 'Cargar mas resultados'}
+        </button>
       )}
     </section>
   );

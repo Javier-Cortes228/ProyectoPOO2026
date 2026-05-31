@@ -7,6 +7,8 @@ Frontend moderno de BanduMusic construido con React + Vite.
 - Catálogo local: consume el backend Spring Boot y reproduce archivos `.mp3` locales.
 - Catálogo online: consulta Jamendo API a través del backend y reproduce audio externo sin persistirlo.
 - Playlists y favoritos: trabajan solo con contenido local persistido.
+- Autenticación: usa JWT Bearer emitido por el backend y lo envía en cada llamada protegida.
+- Jamendo: usa paginación con botón "Cargar más" y precarga de audio para reducir la espera antes de reproducir.
 
 ## Ejecución
 

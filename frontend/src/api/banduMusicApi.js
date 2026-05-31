@@ -2,8 +2,20 @@ const JSON_HEADERS = {
   'Content-Type': 'application/json'
 };
 
+let authToken = '';
+
+export function setAuthToken(token) {
+  authToken = token || '';
+}
+
 async function request(path, options = {}) {
-  const response = await fetch(path, options);
+  const headers = {
+    ...(options.body ? JSON_HEADERS : {}),
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+    ...(options.headers || {})
+  };
+
+  const response = await fetch(path, { ...options, headers });
 
   if (!response.ok) {
     const errorBody = await safeJson(response);
@@ -37,9 +49,12 @@ export function login(correo, contrasena) {
 export function registrar(nombreUsuario, correo, contrasena) {
   return request('/api/usuarios/registrar', {
     method: 'POST',
-    headers: JSON_HEADERS,
     body: JSON.stringify({ nombreUsuario, correo, contrasena })
   });
+}
+
+export function obtenerUsuarioActual() {
+  return request('/api/usuarios/me');
 }
 
 export function cargarCatalogo(titulo = '') {
@@ -64,6 +79,11 @@ export function removerContenidoDePlaylist(playlistId, contenidoId) {
   });
 }
 
-export function buscarJamendo(query) {
-  return request(`/api/jamendo/buscar?query=${encodeURIComponent(query)}`);
+export function buscarJamendo(query, { limit = 30, offset = 0 } = {}) {
+  const params = new URLSearchParams({
+    query,
+    limit: String(limit),
+    offset: String(offset)
+  });
+  return request(`/api/jamendo/buscar?${params.toString()}`);
 }

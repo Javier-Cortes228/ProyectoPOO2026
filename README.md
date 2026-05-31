@@ -19,7 +19,7 @@ La arquitectura mantiene el catálogo local como núcleo del proyecto para respe
 - **Backend:** Java 21 + Spring Boot
 - **Base de datos:** PostgreSQL + Spring Data JPA
 - **Frontend:** React + Vite
-- **Seguridad básica:** BCrypt para contraseñas
+- **Seguridad:** BCrypt para contraseñas + JWT Bearer
 - **Contenido local:** archivos `.mp3` servidos desde Spring Boot
 - **API externa complementaria:** Jamendo API
 
@@ -27,7 +27,7 @@ La arquitectura mantiene el catálogo local como núcleo del proyecto para respe
 
 - Registro e inicio de sesión de usuarios.
 - Catálogo local de canciones y podcasts.
-- Catálogo online Jamendo separado del catálogo local.
+- Catálogo online Jamendo separado del catálogo local, con paginación y carga incremental.
 - Reproducción de audio local y audio online de Jamendo.
 - Creación de playlists personalizadas.
 - Agregado y eliminación de contenido local en playlists.
@@ -43,6 +43,7 @@ La arquitectura mantiene el catálogo local como núcleo del proyecto para respe
 - Programación funcional: uso de `stream`, `filter`, `map`, `removeIf`.
 - Pruebas unitarias con JUnit.
 - Tecnologías extra: interfaz gráfica React/Vite, PostgreSQL e integración Jamendo API.
+- Autenticación con token JWT para proteger endpoints privados.
 
 ## Configuración
 
@@ -53,11 +54,15 @@ DB_URL=jdbc:postgresql://localhost:5432/postgres
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
 APP_CORS_ALLOWED_ORIGINS=http://127.0.0.1:5173,http://localhost:5173
+JWT_SECRET=usar_una_clave_larga_y_privada
+JWT_EXPIRATION_SECONDS=86400
 JAMENDO_CLIENT_ID=
-JAMENDO_SEARCH_MAX_RESULTS=12
+JAMENDO_SEARCH_MAX_RESULTS=30
 ```
 
 Para usar Jamendo se debe crear una aplicación en el portal de desarrolladores de Jamendo y definir `JAMENDO_CLIENT_ID`. Los resultados online se consultan bajo demanda y no se guardan en PostgreSQL.
+
+El catálogo online usa paginación con `limit` y `offset`. Jamendo permite pedir hasta 200 resultados por llamada, pero la interfaz carga 30 por página para mantener la aplicación rápida.
 
 ## Ejecución
 

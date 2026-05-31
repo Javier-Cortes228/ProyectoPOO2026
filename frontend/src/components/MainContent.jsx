@@ -13,10 +13,13 @@ function MainContent({
   pistaActual,
   jamendoActual,
   jamendoResultados,
+  jamendoQuery,
+  jamendoHasMore,
   onClearMessage,
   onError,
   onPlayLocal,
   onPlayJamendo,
+  onPreloadJamendo,
   onToggleFavorito,
   onAddMusic,
   onBuscarJamendo,
@@ -92,8 +95,11 @@ function MainContent({
         <JamendoSection
           resultados={jamendoResultados}
           activeTrackId={jamendoActual?.id}
+          currentQuery={jamendoQuery}
+          hasMore={jamendoHasMore}
           onBuscar={onBuscarJamendo}
           onPlay={onPlayJamendo}
+          onPreload={onPreloadJamendo}
           onError={onError}
         />
       )}

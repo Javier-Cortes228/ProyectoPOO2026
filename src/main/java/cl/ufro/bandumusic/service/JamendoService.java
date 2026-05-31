@@ -28,6 +28,10 @@ public class JamendoService {
     private int maxResults;
 
     public List<JamendoTrackResponse> buscarTracks(String consulta) {
+        return buscarTracks(consulta, maxResults, 0);
+    }
+
+    public List<JamendoTrackResponse> buscarTracks(String consulta, int limit, int offset) {
         if (clientId == null || clientId.isBlank()) {
             throw new IntegracionExternaException("El Client ID de Jamendo no esta configurado.");
         }
@@ -40,12 +44,14 @@ public class JamendoService {
                 .fromUriString(JAMENDO_TRACKS_URL)
                 .queryParam("client_id", clientId)
                 .queryParam("format", "json")
-                .queryParam("limit", limitarResultados())
+                .queryParam("limit", limitarResultados(limit))
+                .queryParam("offset", normalizarOffset(offset))
                 .queryParam("search", consulta.trim())
                 .queryParam("include", "musicinfo")
-                .queryParam("audioformat", "mp32")
+                .queryParam("audioformat", "mp31")
                 .queryParam("imagesize", "300")
-                .queryParam("order", "popularity_total")
+                .queryParam("type", "single albumtrack")
+                .queryParam("order", "relevance")
                 .build()
                 .encode()
                 .toUri();
@@ -62,8 +68,12 @@ public class JamendoService {
         }
     }
 
-    private int limitarResultados() {
-        return Math.max(1, Math.min(maxResults, 25));
+    private int limitarResultados(int limit) {
+        return Math.max(1, Math.min(limit, 200));
+    }
+
+    private int normalizarOffset(int offset) {
+        return Math.max(0, offset);
     }
 
     private List<JamendoTrackResponse> mapearRespuesta(String respuestaJson) throws Exception {

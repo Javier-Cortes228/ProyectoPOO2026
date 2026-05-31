@@ -149,6 +149,7 @@ input {
 .ghost-button,
 .primary-button,
 .create-playlist-button,
+.load-more-button,
 .online-search button,
 .catalog-switch button,
 .quick-searches button {
@@ -164,6 +165,7 @@ input {
 .ghost-button:hover,
 .primary-button:hover,
 .create-playlist-button:hover,
+.load-more-button:hover,
 .online-search button:hover,
 .catalog-switch button:hover,
 .quick-searches button:hover {
@@ -174,6 +176,7 @@ input {
 .mode-switch button.active,
 .primary-button,
 .create-playlist-button,
+.load-more-button,
 .online-search button,
 .catalog-switch button.active {
   border-color: transparent;
@@ -555,6 +558,15 @@ input {
 .online-track em {
   font-style: normal;
   font-size: 12px;
+}
+
+.load-more-button {
+  width: fit-content;
+  justify-self: center;
+}
+
+.audio-preload {
+  display: none;
 }
 
 .player-meta,

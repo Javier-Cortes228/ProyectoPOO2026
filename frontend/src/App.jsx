@@ -5,8 +5,10 @@ import {
   cargarCatalogo,
   crearPlaylist,
   login,
+  obtenerUsuarioActual,
   registrar,
-  removerContenidoDePlaylist
+  removerContenidoDePlaylist,
+  setAuthToken
 } from './api/banduMusicApi.js';
 import AddMusicModal from './components/AddMusicModal.jsx';
 import AuthPanel from './components/AuthPanel.jsx';
@@ -15,16 +17,47 @@ import MainContent from './components/MainContent.jsx';
 import PlayerBar from './components/PlayerBar.jsx';
 import Sidebar from './components/Sidebar.jsx';
 
+const TOKEN_STORAGE_KEY = 'bandumusic:auth-token';
+
 function App() {
   const [usuario, setUsuario] = useState(null);
+  const [token, setToken] = useState(() => window.localStorage.getItem(TOKEN_STORAGE_KEY) || '');
+  const [authReady, setAuthReady] = useState(false);
   const [catalogo, setCatalogo] = useState([]);
   const [activeView, setActiveView] = useState({ type: 'home' });
   const [pistaActual, setPistaActual] = useState(null);
   const [jamendoActual, setJamendoActual] = useState(null);
   const [jamendoResultados, setJamendoResultados] = useState([]);
+  const [jamendoQuery, setJamendoQuery] = useState('');
+  const [jamendoOffset, setJamendoOffset] = useState(0);
+  const [jamendoHasMore, setJamendoHasMore] = useState(false);
+  const [jamendoPreloadUrl, setJamendoPreloadUrl] = useState('');
   const [mensaje, setMensaje] = useState('');
   const [isCreatePlaylistOpen, setCreatePlaylistOpen] = useState(false);
   const [isAddMusicOpen, setAddMusicOpen] = useState(false);
+
+  useEffect(() => {
+    setAuthToken(token);
+
+    if (token) {
+      window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
+      return;
+    }
+
+    window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) {
+      setAuthReady(true);
+      return;
+    }
+
+    obtenerUsuarioActual()
+      .then((data) => setUsuario(normalizarUsuario(data)))
+      .catch(() => cerrarSesionLocal())
+      .finally(() => setAuthReady(true));
+  }, []);
 
   useEffect(() => {
     if (!usuario) {
@@ -60,23 +93,37 @@ function App() {
   async function handleLogin(form) {
     setMensaje('');
     const data = await login(form.correo, form.contrasena);
-    setUsuario(normalizarUsuario(data));
+    setToken(data.token);
+    setAuthToken(data.token);
+    setUsuario(normalizarUsuario(data.usuario));
     setActiveView({ type: 'home' });
   }
 
   async function handleRegistro(form) {
     setMensaje('');
     const data = await registrar(form.nombreUsuario, form.correo, form.contrasena);
-    setUsuario(normalizarUsuario(data));
+    setToken(data.token);
+    setAuthToken(data.token);
+    setUsuario(normalizarUsuario(data.usuario));
     setActiveView({ type: 'home' });
   }
 
   function handleLogout() {
+    cerrarSesionLocal();
+  }
+
+  function cerrarSesionLocal() {
+    setToken('');
+    setAuthToken('');
     setUsuario(null);
     setCatalogo([]);
     setPistaActual(null);
     setJamendoActual(null);
     setJamendoResultados([]);
+    setJamendoQuery('');
+    setJamendoOffset(0);
+    setJamendoHasMore(false);
+    setJamendoPreloadUrl('');
     setActiveView({ type: 'home' });
   }
 
@@ -177,13 +224,40 @@ function App() {
 
   function reproducirJamendo(track) {
     setPistaActual(null);
+    setJamendoPreloadUrl(track.audioUrl);
     setJamendoActual(track);
   }
 
-  async function handleBuscarJamendo(query) {
+  function preloadJamendo(track) {
+    if (track?.audioUrl) {
+      setJamendoPreloadUrl(track.audioUrl);
+    }
+  }
+
+  async function handleBuscarJamendo(query, append = false) {
     setMensaje('');
-    const resultados = await buscarJamendo(query);
-    setJamendoResultados(resultados);
+    const limit = 30;
+    const offset = append ? jamendoOffset : 0;
+    const resultados = await buscarJamendo(query, { limit, offset });
+    setJamendoResultados((actuales) => (append ? [...actuales, ...resultados] : resultados));
+    setJamendoQuery(query);
+    setJamendoOffset(offset + resultados.length);
+    setJamendoHasMore(resultados.length === limit);
+
+    if (resultados[0]) {
+      setJamendoPreloadUrl(resultados[0].audioUrl);
+    }
+  }
+
+  if (!authReady) {
+    return (
+      <main className="auth-shell">
+        <div className="auth-card glass-panel">
+          <h1>BanduMusic</h1>
+          <span>Cargando sesion...</span>
+        </div>
+      </main>
+    );
   }
 
   if (!usuario) {
@@ -218,10 +292,13 @@ function App() {
         pistaActual={pistaActual}
         jamendoActual={jamendoActual}
         jamendoResultados={jamendoResultados}
+        jamendoQuery={jamendoQuery}
+        jamendoHasMore={jamendoHasMore}
         onClearMessage={() => setMensaje('')}
         onError={setMensaje}
         onPlayLocal={reproducirLocal}
         onPlayJamendo={reproducirJamendo}
+        onPreloadJamendo={preloadJamendo}
         onToggleFavorito={toggleFavorito}
         onAddMusic={() => setAddMusicOpen(true)}
         onBuscarJamendo={handleBuscarJamendo}
@@ -234,6 +311,8 @@ function App() {
         queue={activeView.type === 'favorites' ? favoritos : catalogo}
         onPlayLocal={reproducirLocal}
       />
+
+      {jamendoPreloadUrl && <audio className="audio-preload" src={jamendoPreloadUrl} preload="auto" />}
 
       <CreatePlaylistModal
         open={isCreatePlaylistOpen}

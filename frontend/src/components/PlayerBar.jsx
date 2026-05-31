@@ -30,7 +30,7 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal }) {
 
       {jamendoTrack && (
         <div className="external-player">
-          <audio controls autoPlay src={jamendoTrack.audioUrl} />
+          <audio key={jamendoTrack.id} controls autoPlay preload="auto" src={jamendoTrack.audioUrl} />
           <a href={jamendoTrack.jamendoUrl} target="_blank" rel="noreferrer">Ver en Jamendo</a>
         </div>
       )}

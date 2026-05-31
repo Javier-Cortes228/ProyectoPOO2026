@@ -47,8 +47,7 @@ public class UsuarioService {
     @Transactional
     public Usuario login(LoginRequest request) {
         String correoNormalizado = normalizarCorreo(request.correo());
-        Usuario usuario = usuarioRepository.findByCorreo(correoNormalizado)
-                .orElseThrow(() -> new CredencialesInvalidasException("Credenciales incorrectas."));
+        Usuario usuario = obtenerPorCorreo(correoNormalizado);
 
         if (passwordEncoder.matches(request.contrasena(), usuario.getContrasena())) {
             cargarPlaylists(usuario);
@@ -64,6 +63,15 @@ public class UsuarioService {
         }
 
         throw new CredencialesInvalidasException("Credenciales incorrectas.");
+    }
+
+    @Transactional(readOnly = true)
+    public Usuario obtenerPorCorreo(String correo) {
+        String correoNormalizado = normalizarCorreo(correo);
+        Usuario usuario = usuarioRepository.findByCorreo(correoNormalizado)
+                .orElseThrow(() -> new CredencialesInvalidasException("Credenciales incorrectas."));
+        cargarPlaylists(usuario);
+        return usuario;
     }
 
     private String normalizarCorreo(String correo) {
