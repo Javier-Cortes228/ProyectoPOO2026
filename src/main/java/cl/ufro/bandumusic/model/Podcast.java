@@ -1,8 +1,13 @@
 package cl.ufro.bandumusic.model;
+
 import jakarta.persistence.Entity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Entity
 public class Podcast extends ContenidoAudio {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Podcast.class);
 
     private String anfitrion;
     private int numeroDeEpisodios;
@@ -18,17 +23,17 @@ public class Podcast extends ContenidoAudio {
 
     @Override
     public String getDetalles() {
-        return "Podcast: " + titulo + " | Anfitrión: " + anfitrion + " | Episodios: " + numeroDeEpisodios;
+        return "Podcast: " + titulo + " | Anfitrion: " + anfitrion + " | Episodios: " + numeroDeEpisodios;
     }
 
     @Override
     public void reproducir() {
-        System.out.println("Reproduciendo podcast: " + titulo + " presentado por " + anfitrion);
+        LOGGER.info("Reproduciendo podcast: {} presentado por {}", titulo, anfitrion);
     }
 
     @Override
     public void pausar() {
-        System.out.println("Pausando podcast: " + titulo);
+        LOGGER.info("Pausando podcast: {}", titulo);
     }
 
     public String getAnfitrion() {

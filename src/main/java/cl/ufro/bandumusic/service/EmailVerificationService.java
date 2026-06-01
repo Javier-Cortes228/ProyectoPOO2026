@@ -39,8 +39,8 @@ public class EmailVerificationService {
         this.usuarioRepository = usuarioRepository;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
-        this.codeExpirationMinutes = codeExpirationMinutes;
-        this.maxAttempts = maxAttempts;
+        this.codeExpirationMinutes = Math.max(1, codeExpirationMinutes);
+        this.maxAttempts = Math.max(1, maxAttempts);
     }
 
     @Transactional
@@ -73,6 +73,10 @@ public class EmailVerificationService {
 
     @Transactional
     public void verificarCodigo(String correo, String codigo) {
+        if (correo == null || codigo == null || codigo.isBlank()) {
+            throw new TokenVerificacionException("El codigo de verificacion es invalido.");
+        }
+
         String correoNormalizado = correo.trim().toLowerCase(Locale.ROOT);
         EmailVerificationToken verificationToken = tokenRepository
                 .findTopByUsuarioCorreoAndUsedAtIsNullOrderByCreatedAtDesc(correoNormalizado)
@@ -87,8 +91,13 @@ public class EmailVerificationService {
 
         if (!passwordEncoder.matches(codigo, verificationToken.getCodeHash())) {
             verificationToken.registrarIntentoFallido();
+            if (verificationToken.excedeIntentos(maxAttempts)) {
+                verificationToken.marcarComoUsado(ahora);
+            }
             tokenRepository.save(verificationToken);
-            throw new TokenVerificacionException("El codigo de verificacion es incorrecto.");
+            throw new TokenVerificacionException(verificationToken.fueUsado()
+                    ? "Se alcanzo el maximo de intentos. Solicita un nuevo codigo."
+                    : "El codigo de verificacion es incorrecto.");
         }
 
         Usuario usuario = verificationToken.getUsuario();

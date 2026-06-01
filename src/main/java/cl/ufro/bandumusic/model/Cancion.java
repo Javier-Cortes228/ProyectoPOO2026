@@ -1,13 +1,18 @@
 package cl.ufro.bandumusic.model;
+
 import jakarta.persistence.Entity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Entity
 public class Cancion extends ContenidoAudio {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Cancion.class);
+
     private String artista;
     private String album;
 
-    public Cancion(){
+    public Cancion() {
     }
 
     public Cancion(String id, String titulo, int duracionSegundos, String artista, String album) {
@@ -18,17 +23,17 @@ public class Cancion extends ContenidoAudio {
 
     @Override
     public String getDetalles() {
-        return "Canción: " + titulo + " | Artista: " + artista + " | Álbum: " + album;
+        return "Cancion: " + titulo + " | Artista: " + artista + " | Album: " + album;
     }
 
     @Override
     public void reproducir() {
-        System.out.println("Reproduciendo canción: " + titulo + " de " + artista);
+        LOGGER.info("Reproduciendo cancion: {} de {}", titulo, artista);
     }
 
     @Override
     public void pausar() {
-        System.out.println("Pausando canción: " + titulo);
+        LOGGER.info("Pausando cancion: {}", titulo);
     }
 
     public String getArtista() {

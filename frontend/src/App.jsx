@@ -336,17 +336,22 @@ function App() {
       return;
     }
 
+    const tempHistoryId = `temp-${Date.now()}-${item.id}`;
     const historialItem = normalizarHistorialItem({
       ...item,
+      historialId: tempHistoryId,
       contenidoId: item.id,
       fuente: item.fuente || (esContenidoJamendo(item) ? 'JAMENDO' : 'LOCAL'),
       reproducidoEn: new Date().toISOString()
     });
-    setHistorial((actual) => [historialItem, ...actual.filter((entrada) => entrada.id !== historialItem.id)].slice(0, 20));
+    setHistorial((actual) => [historialItem, ...actual].slice(0, 20));
 
     registrarReproduccion(historialItem)
       .then((guardado) => {
-        setHistorial((actual) => [normalizarHistorialItem(guardado), ...actual.filter((entrada) => entrada.id !== historialItem.id)].slice(0, 20));
+        setHistorial((actual) => [
+          normalizarHistorialItem(guardado),
+          ...actual.filter((entrada) => entrada.historialId !== tempHistoryId)
+        ].slice(0, 20));
         return cargarRecomendaciones();
       })
       .then(setRecomendaciones)
@@ -510,10 +515,11 @@ function normalizarPlaylist(playlist) {
 }
 
 function normalizarHistorialItem(item) {
+  const contenidoId = item.contenidoId || item.id;
   return {
     ...item,
-    id: item.contenidoId || item.id,
-    historialId: item.id,
+    id: contenidoId,
+    historialId: item.historialId || item.id,
     fuente: item.fuente || (item.audioUrl ? 'JAMENDO' : 'LOCAL'),
     tipo: item.tipo || (item.fuente === 'JAMENDO' ? 'JAMENDO' : 'CONTENIDO_AUDIO')
   };

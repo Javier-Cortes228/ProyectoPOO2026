@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
@@ -75,7 +76,7 @@ public class JwtService {
         String datosFirmados = partes[0] + "." + partes[1];
         String firmaEsperada = firmar(datosFirmados);
 
-        if (!firmaEsperada.equals(partes[2])) {
+        if (!firmasCoinciden(firmaEsperada, partes[2])) {
             throw new CredencialesInvalidasException("Token invalido.");
         }
 
@@ -109,6 +110,10 @@ public class JwtService {
     }
 
     private String firmar(String datos) {
+        if (jwtSecret == null || jwtSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT_SECRET debe tener al menos 32 bytes.");
+        }
+
         try {
             Mac mac = Mac.getInstance(HMAC_ALGORITHM);
             mac.init(new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM));
@@ -118,5 +123,12 @@ public class JwtService {
         } catch (Exception ex) {
             throw new IllegalStateException("No fue posible firmar el token.", ex);
         }
+    }
+
+    private boolean firmasCoinciden(String firmaEsperada, String firmaRecibida) {
+        return MessageDigest.isEqual(
+                firmaEsperada.getBytes(StandardCharsets.UTF_8),
+                firmaRecibida.getBytes(StandardCharsets.UTF_8)
+        );
     }
 }

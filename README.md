@@ -161,7 +161,7 @@ Cobertura actual de pruebas:
 
 - Logica POO principal: usuarios, playlists, catalogo, excepciones y BCrypt.
 - Playlist mixta con referencia Jamendo.
-- Validaciones de nombre de usuario y contrasena.
+- Validaciones de nombre de usuario y contraseña.
 - Contexto Spring Boot con perfil `test`.
 - Integracion de historial y recomendaciones usando H2.
 

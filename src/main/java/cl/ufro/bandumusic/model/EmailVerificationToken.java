@@ -53,7 +53,7 @@ public class EmailVerificationToken {
     }
 
     public boolean estaExpirado(LocalDateTime ahora) {
-        return expiresAt.isBefore(ahora);
+        return !expiresAt.isAfter(ahora);
     }
 
     public boolean fueUsado() {

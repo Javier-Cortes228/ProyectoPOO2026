@@ -238,7 +238,7 @@ function LibrarySection({
       <div className="track-grid">
         {items.map((item) => (
           <TrackCard
-            key={item.id}
+            key={item.historialId || item.id}
             item={item}
             active={pistaActual?.id === item.id || jamendoActual?.id === item.id}
             favorite={favoriteSet.has(item.id)}
