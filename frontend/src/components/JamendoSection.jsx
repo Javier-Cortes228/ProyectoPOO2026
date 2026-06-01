@@ -2,10 +2,24 @@ import { useState } from 'react';
 
 const QUICK_SEARCHES = ['rock', 'electronic', 'jazz', 'relaxation'];
 
-function JamendoSection({ resultados, activeTrackId, currentQuery, hasMore, onBuscar, onPlay, onPreload, onError }) {
+function JamendoSection({
+  resultados,
+  activeTrackId,
+  currentQuery,
+  hasMore,
+  playlists,
+  favoriteSet,
+  onBuscar,
+  onPlay,
+  onPreload,
+  onToggleFavorito,
+  onAddToPlaylist,
+  onError
+}) {
   const [query, setQuery] = useState('');
   const [cargando, setCargando] = useState(false);
   const [cargandoMas, setCargandoMas] = useState(false);
+  const [playlistSeleccionada, setPlaylistSeleccionada] = useState('');
 
   async function submit(event) {
     event.preventDefault();
@@ -78,22 +92,54 @@ function JamendoSection({ resultados, activeTrackId, currentQuery, hasMore, onBu
         ))}
       </div>
 
+      <div className="online-actions-bar glass-panel">
+        <label>
+          Agregar resultados a
+          <select value={playlistSeleccionada} onChange={(event) => setPlaylistSeleccionada(event.target.value)}>
+            <option value="">Selecciona playlist</option>
+            {(playlists || []).map((playlist) => (
+              <option key={playlist.id} value={playlist.id}>{playlist.nombre}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
       <div className="online-grid">
         {resultados.map((track) => (
-          <button
+          <article
             className={`online-track glass-panel ${activeTrackId === track.id ? 'active' : ''}`}
             key={track.id}
             onFocus={() => onPreload(track)}
             onMouseEnter={() => onPreload(track)}
-            onClick={() => onPlay(track)}
           >
-            <img src={track.imagenUrl} alt="" />
-            <span>
-              <strong>{track.titulo}</strong>
-              <small>{track.artista || 'Artista Jamendo'}</small>
-              <em>{track.album || 'Single'} - {formatDuration(track.duracionSegundos)}</em>
-            </span>
-          </button>
+            <button className="online-track-main" type="button" onClick={() => onPlay(track)}>
+              <img src={track.imagenUrl} alt="" />
+              <span>
+                <strong>{track.titulo}</strong>
+                <small>{track.artista || 'Artista Jamendo'}</small>
+                <em>{[track.album || 'Single', track.genero, formatDuration(track.duracionSegundos)].filter(Boolean).join(' - ')}</em>
+              </span>
+            </button>
+
+            <div className="online-track-actions">
+              <button
+                type="button"
+                className={`favorite-button ${favoriteSet?.has(track.id) ? 'active' : ''}`}
+                aria-label={favoriteSet?.has(track.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                onClick={() => onToggleFavorito(track)}
+              >
+                <span>{favoriteSet?.has(track.id) ? 'Fav' : '+'}</span>
+              </button>
+              <button
+                type="button"
+                className="ghost-button compact"
+                disabled={!playlistSeleccionada}
+                onClick={() => onAddToPlaylist(track, playlistSeleccionada)}
+              >
+                Agregar
+              </button>
+            </div>
+          </article>
         ))}
       </div>
 

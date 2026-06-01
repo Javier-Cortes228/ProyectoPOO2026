@@ -1,5 +1,6 @@
 function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal }) {
-  const currentIndex = pista ? queue.findIndex((item) => item.id === pista.id) : -1;
+  const current = pista || jamendoTrack;
+  const currentIndex = current ? queue.findIndex((item) => item.id === current.id) : -1;
 
   function previous() {
     if (currentIndex > 0) {
@@ -30,8 +31,10 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal }) {
 
       {jamendoTrack && (
         <div className="external-player">
+          <button onClick={previous} disabled={currentIndex <= 0}>Anterior</button>
           <audio key={jamendoTrack.id} controls autoPlay preload="auto" src={jamendoTrack.audioUrl} />
           <a href={jamendoTrack.jamendoUrl} target="_blank" rel="noreferrer">Ver en Jamendo</a>
+          <button onClick={next} disabled={currentIndex < 0 || currentIndex >= queue.length - 1}>Siguiente</button>
         </div>
       )}
     </footer>

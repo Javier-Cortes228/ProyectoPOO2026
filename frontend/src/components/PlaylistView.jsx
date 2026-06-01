@@ -1,6 +1,15 @@
 import TrackCard from './TrackCard.jsx';
 
-function PlaylistView({ playlist, favoriteSet, pistaActual, onPlay, onAddMusic, onToggleFavorito }) {
+function PlaylistView({
+  playlist,
+  favoriteSet,
+  pistaActual,
+  onPlay,
+  onAddMusic,
+  onRemove,
+  onDeletePlaylist,
+  onToggleFavorito
+}) {
   const contenidos = playlist.contenidos || [];
 
   return (
@@ -11,7 +20,10 @@ function PlaylistView({ playlist, favoriteSet, pistaActual, onPlay, onAddMusic, 
           <h1>{playlist.nombre}</h1>
           <span>{contenidos.length} pistas agregadas</span>
         </div>
-        <button className="primary-button" onClick={onAddMusic}>Agregar música</button>
+        <div className="playlist-actions">
+          <button className="primary-button" onClick={onAddMusic}>Agregar musica</button>
+          <button className="danger-button" onClick={onDeletePlaylist}>Eliminar playlist</button>
+        </div>
       </div>
 
       <div className="track-grid">
@@ -22,14 +34,15 @@ function PlaylistView({ playlist, favoriteSet, pistaActual, onPlay, onAddMusic, 
             active={pistaActual?.id === item.id}
             favorite={favoriteSet.has(item.id)}
             onPlay={() => onPlay(item)}
-            onToggleFavorite={() => onToggleFavorito(item.id)}
+            onToggleFavorite={() => onToggleFavorito(item)}
+            onRemove={() => onRemove(item)}
           />
         ))}
       </div>
 
       {contenidos.length === 0 && (
         <div className="empty-state glass-panel">
-          Esta playlist está vacía. Usa "Agregar música" para sumar canciones o podcasts.
+          Esta playlist esta vacia. Usa "Agregar musica" para sumar canciones o podcasts.
         </div>
       )}
     </section>

@@ -6,6 +6,7 @@ public record JamendoTrackResponse(
         int duracionSegundos,
         String artista,
         String album,
+        String genero,
         String imagenUrl,
         String audioUrl,
         String licenciaUrl,

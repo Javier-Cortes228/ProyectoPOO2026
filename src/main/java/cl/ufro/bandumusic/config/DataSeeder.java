@@ -5,12 +5,16 @@ import cl.ufro.bandumusic.model.Podcast;
 import cl.ufro.bandumusic.model.Usuario;
 import cl.ufro.bandumusic.repository.ContenidoAudioRepository;
 import cl.ufro.bandumusic.repository.UsuarioRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DataSeeder implements CommandLineRunner {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataSeeder.class);
 
     private final ContenidoAudioRepository contenidoAudioRepository;
     private final UsuarioRepository usuarioRepository;
@@ -30,19 +34,36 @@ public class DataSeeder implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // Solo inyectamos los datos si el catálogo está vacío
         if (contenidoAudioRepository.count() == 0) {
-            System.out.println("Base de datos vacía detectada. Sembrando catálogo final de 70 pistas...");
+            LOGGER.info("Base de datos vacia detectada. Sembrando catalogo final de 70 pistas...");
             cargarCanciones();
             cargarPodcasts();
-            System.out.println("Catálogo musical sembrado con éxito.");
+            LOGGER.info("Catalogo musical sembrado con exito.");
         }
 
         // Solo inyectamos usuarios si la tabla está vacía
         if (usuarioRepository.count() == 0) {
-            System.out.println("Sembrando usuarios por defecto...");
-            usuarioRepository.save(new Usuario("u1", "Admin", "admin@ufro.cl", passwordEncoder.encode("1234")));
-            usuarioRepository.save(new Usuario("u2", "Test", "test@ufro.cl", passwordEncoder.encode("1234")));
-            System.out.println("Usuarios listos.");
+            LOGGER.info("Sembrando usuarios por defecto...");
+            Usuario admin = new Usuario("u1", "Admin", "admin@ufro.cl", passwordEncoder.encode("1234"));
+            admin.marcarCorreoComoVerificado();
+            usuarioRepository.save(admin);
+
+            Usuario test = new Usuario("u2", "Test", "test@ufro.cl", passwordEncoder.encode("1234"));
+            test.marcarCorreoComoVerificado();
+            usuarioRepository.save(test);
+            LOGGER.info("Usuarios por defecto listos.");
         }
+
+        asegurarUsuarioVerificado("admin@ufro.cl");
+        asegurarUsuarioVerificado("test@ufro.cl");
+    }
+
+    private void asegurarUsuarioVerificado(String correo) {
+        usuarioRepository.findByCorreo(correo).ifPresent(usuario -> {
+            if (!usuario.isCorreoVerificado()) {
+                usuario.marcarCorreoComoVerificado();
+                usuarioRepository.save(usuario);
+            }
+        });
     }
 
     private void cargarCanciones() {

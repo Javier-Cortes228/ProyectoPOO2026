@@ -8,6 +8,7 @@ public record UsuarioResponse(
         String id,
         String nombreUsuario,
         String correo,
+        boolean correoVerificado,
         List<PlayListResponse> playlist
 ) {
 
@@ -16,6 +17,7 @@ public record UsuarioResponse(
                 usuario.getId(),
                 usuario.getNombreUsuario(),
                 usuario.getCorreo(),
+                usuario.isCorreoVerificado(),
                 usuario.getPlaylist().stream()
                         .map(PlayListResponse::from)
                         .toList()

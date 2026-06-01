@@ -1,9 +1,13 @@
 package cl.ufro.bandumusic.model;
 
 import cl.ufro.bandumusic.exception.PlaylistLlenaException;
+import cl.ufro.bandumusic.dto.request.JamendoPlaylistItemRequest;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.OneToMany;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,8 +21,13 @@ public class PlayList {
     private String id;
     private String nombre;
 
-    @ManyToMany
-    private List<ContenidoAudio> contenidos;
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinTable(
+            name = "playlist_items",
+            joinColumns = @JoinColumn(name = "playlist_id"),
+            inverseJoinColumns = @JoinColumn(name = "item_id")
+    )
+    private List<PlaylistItem> contenidos;
 
     public PlayList() {
         this.contenidos = new ArrayList<>();
@@ -36,29 +45,63 @@ public class PlayList {
             throw new IllegalArgumentException("El contenido no puede ser nulo.");
         }
 
-        if (this.contenidos.size() >= LIMITE_CONTENIDOS) {
-            throw new PlaylistLlenaException("La playlist ha alcanzado su limite de 300 pistas.");
-        }
+        validarCapacidad();
 
         boolean yaExiste = this.contenidos.stream()
-                .anyMatch(audio -> audio.getId().equals(contenido.getId()));
+                .anyMatch(item -> item.representaContenidoLocal(contenido.getId()));
         if (yaExiste) {
             return;
         }
 
-        this.contenidos.add(contenido);
+        this.contenidos.add(PlaylistItem.local(contenido));
+    }
+
+    public void agregarContenidoJamendo(JamendoPlaylistItemRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("El contenido de Jamendo no puede ser nulo.");
+        }
+
+        validarCapacidad();
+
+        boolean yaExiste = this.contenidos.stream()
+                .anyMatch(item -> item.representaJamendo(request.id()));
+        if (yaExiste) {
+            return;
+        }
+
+        this.contenidos.add(PlaylistItem.jamendo(
+                request.id(),
+                request.titulo(),
+                request.duracionSegundos(),
+                request.artista(),
+                request.album(),
+                request.genero(),
+                request.imagenUrl(),
+                request.audioUrl(),
+                request.licenciaUrl(),
+                request.jamendoUrl()
+        ));
     }
 
     public void removerContenido(String idContenido) {
-        this.contenidos.removeIf(audio -> audio.getId().equals(idContenido));
+        this.contenidos.removeIf(item ->
+                item.getId().equals(idContenido)
+                        || idContenido.equals(item.getClaveContenido())
+        );
     }
 
     public int calcularDuracionTotal() {
         int total = 0;
-        for (ContenidoAudio audio : contenidos) {
-            total += audio.getDuracionSegundos();
+        for (PlaylistItem item : contenidos) {
+            total += item.getDuracionSegundos();
         }
         return total;
+    }
+
+    private void validarCapacidad() {
+        if (this.contenidos.size() >= LIMITE_CONTENIDOS) {
+            throw new PlaylistLlenaException("La playlist ha alcanzado su limite de 300 pistas.");
+        }
     }
 
     private void validarNombre(String nombre) {
@@ -84,11 +127,11 @@ public class PlayList {
         this.nombre = nombre.trim();
     }
 
-    public List<ContenidoAudio> getContenidos() {
+    public List<PlaylistItem> getContenidos() {
         return contenidos;
     }
 
-    public void setContenidos(List<ContenidoAudio> contenidos) {
+    public void setContenidos(List<PlaylistItem> contenidos) {
         this.contenidos = contenidos != null ? contenidos : new ArrayList<>();
     }
 }

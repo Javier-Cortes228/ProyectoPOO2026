@@ -15,11 +15,20 @@ async function request(path, options = {}) {
     ...(options.headers || {})
   };
 
-  const response = await fetch(path, { ...options, headers });
+  let response;
+  try {
+    response = await fetch(path, { ...options, headers });
+  } catch {
+    throw new Error('No se pudo conectar con el backend. Verifica que Spring Boot este corriendo en http://localhost:8080.');
+  }
 
   if (!response.ok) {
     const errorBody = await safeJson(response);
-    const message = errorBody?.mensaje || errorBody?.message || 'No fue posible completar la solicitud.';
+    const message = errorBody?.mensaje
+      || errorBody?.message
+      || (response.status >= 500
+        ? 'El backend no esta disponible o fallo al procesar la solicitud. Revisa la consola de Spring Boot.'
+        : 'No fue posible completar la solicitud.');
     throw new Error(message);
   }
 
@@ -57,6 +66,23 @@ export function obtenerUsuarioActual() {
   return request('/api/usuarios/me');
 }
 
+export function verificarCorreo(token) {
+  return request(`/api/usuarios/verificar?token=${encodeURIComponent(token)}`);
+}
+
+export function verificarCodigoCorreo(correo, codigo) {
+  return request('/api/usuarios/verificar-codigo', {
+    method: 'POST',
+    body: JSON.stringify({ correo, codigo })
+  });
+}
+
+export function reenviarVerificacion(correo) {
+  return request(`/api/usuarios/reenviar-verificacion?correo=${encodeURIComponent(correo)}`, {
+    method: 'POST'
+  });
+}
+
 export function cargarCatalogo(titulo = '') {
   return request(`/api/catalogo/buscar?titulo=${encodeURIComponent(titulo)}`);
 }
@@ -73,10 +99,63 @@ export function agregarContenidoAPlaylist(playlistId, contenidoId) {
   });
 }
 
+export function agregarJamendoAPlaylist(playlistId, track) {
+  return request(`/api/playlists/${encodeURIComponent(playlistId)}/agregar-jamendo`, {
+    method: 'POST',
+    body: JSON.stringify({
+      id: track.id,
+      titulo: track.titulo,
+      duracionSegundos: track.duracionSegundos || 0,
+      artista: track.artista || '',
+      album: track.album || '',
+      genero: track.genero || '',
+      imagenUrl: track.imagenUrl || '',
+      audioUrl: track.audioUrl,
+      licenciaUrl: track.licenciaUrl || '',
+      jamendoUrl: track.jamendoUrl || ''
+    })
+  });
+}
+
 export function removerContenidoDePlaylist(playlistId, contenidoId) {
   return request(`/api/playlists/${encodeURIComponent(playlistId)}/contenidos/${encodeURIComponent(contenidoId)}`, {
     method: 'DELETE'
   });
+}
+
+export function eliminarPlaylist(playlistId) {
+  return request(`/api/playlists/${encodeURIComponent(playlistId)}`, {
+    method: 'DELETE'
+  });
+}
+
+export function registrarReproduccion(item) {
+  return request('/api/historial/reproducciones', {
+    method: 'POST',
+    body: JSON.stringify({
+      id: item.id,
+      titulo: item.titulo,
+      duracionSegundos: item.duracionSegundos || 0,
+      tipo: item.tipo || '',
+      artista: item.artista || '',
+      album: item.album || '',
+      anfitrion: item.anfitrion || '',
+      genero: item.genero || '',
+      imagenUrl: item.imagenUrl || '',
+      audioUrl: item.audioUrl || '',
+      licenciaUrl: item.licenciaUrl || '',
+      jamendoUrl: item.jamendoUrl || '',
+      fuente: item.fuente || (item.audioUrl ? 'JAMENDO' : 'LOCAL')
+    })
+  });
+}
+
+export function cargarHistorial(limit = 20) {
+  return request(`/api/historial/recientes?limit=${encodeURIComponent(limit)}`);
+}
+
+export function cargarRecomendaciones(limit = 12) {
+  return request(`/api/recomendaciones?limit=${encodeURIComponent(limit)}`);
 }
 
 export function buscarJamendo(query, { limit = 30, offset = 0 } = {}) {

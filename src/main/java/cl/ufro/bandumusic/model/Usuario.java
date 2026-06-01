@@ -27,7 +27,10 @@ public class Usuario {
     @Column(nullable = false, length = 120)
     private String contrasena;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean correoVerificado;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlayList> playlist;
 
     public Usuario() {
@@ -43,6 +46,7 @@ public class Usuario {
         this.nombreUsuario = nombreUsuario.trim();
         this.correo = correo.trim();
         this.contrasena = contrasena;
+        this.correoVerificado = false;
         this.playlist = new ArrayList<>();
         this.playlist.add(new PlayList(UUID.randomUUID().toString(), "Favoritos"));
     }
@@ -66,6 +70,10 @@ public class Usuario {
         if (!this.playlist.isEmpty()) {
             this.playlist.get(0).agregarContenido(audio);
         }
+    }
+
+    public void marcarCorreoComoVerificado() {
+        this.correoVerificado = true;
     }
 
     private void validarTexto(String valor, String mensaje) {
@@ -104,6 +112,14 @@ public class Usuario {
 
     public void setContrasena(String contrasena) {
         this.contrasena = contrasena;
+    }
+
+    public boolean isCorreoVerificado() {
+        return correoVerificado;
+    }
+
+    public void setCorreoVerificado(boolean correoVerificado) {
+        this.correoVerificado = correoVerificado;
     }
 
     public List<PlayList> getPlaylist() {

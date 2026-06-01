@@ -8,6 +8,8 @@ function MainContent({
   activePlaylist,
   catalogo,
   favoritos,
+  historial,
+  recomendaciones,
   favoritosIds,
   mensaje,
   pistaActual,
@@ -22,7 +24,11 @@ function MainContent({
   onPreloadJamendo,
   onToggleFavorito,
   onAddMusic,
+  onRemoveFromPlaylist,
+  onDeletePlaylist,
   onBuscarJamendo,
+  playlists,
+  onAddJamendoToPlaylist,
   onLogout
 }) {
   const [busqueda, setBusqueda] = useState('');
@@ -50,6 +56,8 @@ function MainContent({
           pistaActual={pistaActual}
           onPlay={onPlayLocal}
           onAddMusic={onAddMusic}
+          onRemove={onRemoveFromPlaylist}
+          onDeletePlaylist={onDeletePlaylist}
           onToggleFavorito={onToggleFavorito}
         />
       </main>
@@ -69,6 +77,46 @@ function MainContent({
           pistaActual={pistaActual}
           onPlay={onPlayLocal}
           onToggleFavorito={onToggleFavorito}
+        />
+      </main>
+    );
+  }
+
+  if (activeView.type === 'history') {
+    return (
+      <main className="content">
+        <Topbar busqueda={busqueda} setBusqueda={setBusqueda} onLogout={onLogout} />
+        <Message mensaje={mensaje} onClear={onClearMessage} />
+        <LibrarySection
+          title="Historial reciente"
+          subtitle="Ultimas canciones reproducidas"
+          items={(historial || []).filter((item) => coincideConFiltro(item, busqueda.trim().toLowerCase()))}
+          favoriteSet={favoriteSet}
+          pistaActual={pistaActual}
+          jamendoActual={jamendoActual}
+          onPlay={onPlayLocal}
+          onToggleFavorito={onToggleFavorito}
+          emptyMessage="Aun no hay reproducciones registradas."
+        />
+      </main>
+    );
+  }
+
+  if (activeView.type === 'recommendations') {
+    return (
+      <main className="content">
+        <Topbar busqueda={busqueda} setBusqueda={setBusqueda} onLogout={onLogout} />
+        <Message mensaje={mensaje} onClear={onClearMessage} />
+        <LibrarySection
+          title="Recomendaciones"
+          subtitle="Sugerencias basadas en artista o genero"
+          items={(recomendaciones || []).filter((item) => coincideConFiltro(item, busqueda.trim().toLowerCase()))}
+          favoriteSet={favoriteSet}
+          pistaActual={pistaActual}
+          jamendoActual={jamendoActual}
+          onPlay={onPlayLocal}
+          onToggleFavorito={onToggleFavorito}
+          emptyMessage="Reproduce canciones para generar recomendaciones."
         />
       </main>
     );
@@ -100,6 +148,10 @@ function MainContent({
           onBuscar={onBuscarJamendo}
           onPlay={onPlayJamendo}
           onPreload={onPreloadJamendo}
+          playlists={playlists}
+          favoriteSet={favoriteSet}
+          onToggleFavorito={onToggleFavorito}
+          onAddToPlaylist={onAddJamendoToPlaylist}
           onError={onError}
         />
       )}
@@ -162,7 +214,17 @@ function HeroStats({ total, favoritos }) {
   );
 }
 
-function LibrarySection({ title, subtitle, items, favoriteSet, pistaActual, onPlay, onToggleFavorito }) {
+function LibrarySection({
+  title,
+  subtitle,
+  items,
+  favoriteSet,
+  pistaActual,
+  jamendoActual,
+  onPlay,
+  onToggleFavorito,
+  emptyMessage = 'No hay contenido para mostrar.'
+}) {
   return (
     <section className="section-block">
       <div className="section-heading">
@@ -178,15 +240,15 @@ function LibrarySection({ title, subtitle, items, favoriteSet, pistaActual, onPl
           <TrackCard
             key={item.id}
             item={item}
-            active={pistaActual?.id === item.id}
+            active={pistaActual?.id === item.id || jamendoActual?.id === item.id}
             favorite={favoriteSet.has(item.id)}
             onPlay={() => onPlay(item)}
-            onToggleFavorite={() => onToggleFavorito(item.id)}
+            onToggleFavorite={() => onToggleFavorito(item)}
           />
         ))}
       </div>
 
-      {items.length === 0 && <p className="empty-state">No hay contenido para mostrar.</p>}
+      {items.length === 0 && <p className="empty-state">{emptyMessage}</p>}
     </section>
   );
 }

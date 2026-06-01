@@ -7,6 +7,8 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -27,12 +29,25 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/usuarios/login", "/api/usuarios/registrar").permitAll()
+                        .requestMatchers(
+                                "/api/usuarios/login",
+                                "/api/usuarios/registrar",
+                                "/api/usuarios/verificar",
+                                "/api/usuarios/verificar-codigo",
+                                "/api/usuarios/reenviar-verificacion"
+                        ).permitAll()
                         .requestMatchers("/audio/**").permitAll()
                         .requestMatchers("/", "/index.html", "/assets/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return username -> {
+            throw new UsernameNotFoundException("BanduMusic usa autenticacion JWT propia.");
+        };
     }
 }

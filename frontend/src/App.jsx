@@ -1,14 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  agregarJamendoAPlaylist,
   agregarContenidoAPlaylist,
   buscarJamendo,
   cargarCatalogo,
+  cargarHistorial,
+  cargarRecomendaciones,
   crearPlaylist,
+  eliminarPlaylist,
   login,
   obtenerUsuarioActual,
+  reenviarVerificacion,
+  registrarReproduccion,
   registrar,
   removerContenidoDePlaylist,
-  setAuthToken
+  setAuthToken,
+  verificarCodigoCorreo,
+  verificarCorreo
 } from './api/banduMusicApi.js';
 import AddMusicModal from './components/AddMusicModal.jsx';
 import AuthPanel from './components/AuthPanel.jsx';
@@ -24,6 +32,8 @@ function App() {
   const [token, setToken] = useState(() => window.localStorage.getItem(TOKEN_STORAGE_KEY) || '');
   const [authReady, setAuthReady] = useState(false);
   const [catalogo, setCatalogo] = useState([]);
+  const [historial, setHistorial] = useState([]);
+  const [recomendaciones, setRecomendaciones] = useState([]);
   const [activeView, setActiveView] = useState({ type: 'home' });
   const [pistaActual, setPistaActual] = useState(null);
   const [jamendoActual, setJamendoActual] = useState(null);
@@ -35,6 +45,24 @@ function App() {
   const [mensaje, setMensaje] = useState('');
   const [isCreatePlaylistOpen, setCreatePlaylistOpen] = useState(false);
   const [isAddMusicOpen, setAddMusicOpen] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const verificationToken = params.get('verifyToken');
+    if (!verificationToken) {
+      return;
+    }
+
+    verificarCorreo(verificationToken)
+      .then((data) => setMensaje(data.mensaje || 'Correo verificado correctamente.'))
+      .catch((error) => setMensaje(error.message))
+      .finally(() => {
+        params.delete('verifyToken');
+        const query = params.toString();
+        const cleanUrl = `${window.location.pathname}${query ? `?${query}` : ''}`;
+        window.history.replaceState({}, '', cleanUrl);
+      });
+  }, []);
 
   useEffect(() => {
     setAuthToken(token);
@@ -60,14 +88,22 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!usuario) {
+    if (!usuario?.id) {
       return;
     }
 
     cargarCatalogo()
       .then(setCatalogo)
       .catch((error) => setMensaje(error.message));
-  }, [usuario]);
+
+    cargarHistorial()
+      .then((items) => setHistorial(items.map(normalizarHistorialItem)))
+      .catch((error) => setMensaje(error.message));
+
+    cargarRecomendaciones()
+      .then(setRecomendaciones)
+      .catch((error) => setMensaje(error.message));
+  }, [usuario?.id]);
 
   const playlists = usuario?.playlist || [];
   const playlistFavoritos = useMemo(() => {
@@ -102,10 +138,19 @@ function App() {
   async function handleRegistro(form) {
     setMensaje('');
     const data = await registrar(form.nombreUsuario, form.correo, form.contrasena);
-    setToken(data.token);
-    setAuthToken(data.token);
-    setUsuario(normalizarUsuario(data.usuario));
-    setActiveView({ type: 'home' });
+    setMensaje(data.mensaje || 'Cuenta creada. Revisa tu correo para obtener el codigo.');
+  }
+
+  async function handleReenviarVerificacion(correo) {
+    setMensaje('');
+    const data = await reenviarVerificacion(correo);
+    setMensaje(data.mensaje || 'Se envio un nuevo codigo de verificacion.');
+  }
+
+  async function handleVerificarCodigo(form) {
+    setMensaje('');
+    const data = await verificarCodigoCorreo(form.correo, form.codigo);
+    setMensaje(data.mensaje || 'Correo verificado correctamente. Ya puedes iniciar sesion.');
   }
 
   function handleLogout() {
@@ -117,6 +162,8 @@ function App() {
     setAuthToken('');
     setUsuario(null);
     setCatalogo([]);
+    setHistorial([]);
+    setRecomendaciones([]);
     setPistaActual(null);
     setJamendoActual(null);
     setJamendoResultados([]);
@@ -170,6 +217,44 @@ function App() {
     setAddMusicOpen(false);
   }
 
+  async function handleRemoverDePlaylist(item) {
+    if (!activePlaylist || !item?.id) {
+      return;
+    }
+
+    try {
+      await removerContenidoDePlaylist(activePlaylist.id, item.id);
+      actualizarPlaylist(activePlaylist.id, (playlist) => {
+        const contenidos = (playlist.contenidos || []).filter((contenido) => contenido.id !== item.id);
+        return {
+          ...playlist,
+          contenidos,
+          duracionTotalSegundos: calcularDuracion(contenidos)
+        };
+      });
+    } catch (error) {
+      setMensaje(error.message);
+    }
+  }
+
+  async function handleEliminarPlaylist() {
+    if (!activePlaylist) {
+      return;
+    }
+
+    try {
+      await eliminarPlaylist(activePlaylist.id);
+      setUsuario((actual) => ({
+        ...actual,
+        playlist: (actual.playlist || []).filter((playlist) => playlist.id !== activePlaylist.id)
+      }));
+      setActiveView({ type: 'home' });
+      setMensaje(`Playlist "${activePlaylist.nombre}" eliminada.`);
+    } catch (error) {
+      setMensaje(error.message);
+    }
+  }
+
   function actualizarPlaylist(playlistId, actualizar) {
     setUsuario((actual) => ({
       ...actual,
@@ -179,9 +264,14 @@ function App() {
     }));
   }
 
-  async function toggleFavorito(itemId) {
+  async function toggleFavorito(item) {
     if (!playlistFavoritos) {
       setMensaje('No existe una playlist de Favoritos para este usuario.');
+      return;
+    }
+
+    const itemId = typeof item === 'string' ? item : item?.id;
+    if (!itemId) {
       return;
     }
 
@@ -195,6 +285,12 @@ function App() {
           contenidos: (playlist.contenidos || []).filter((item) => item.id !== itemId),
           duracionTotalSegundos: calcularDuracion((playlist.contenidos || []).filter((item) => item.id !== itemId))
         }));
+        return;
+      }
+
+      if (esContenidoJamendo(item)) {
+        const playlistActualizada = normalizarPlaylist(await agregarJamendoAPlaylist(playlistFavoritos.id, item));
+        reemplazarPlaylist(playlistActualizada);
         return;
       }
 
@@ -218,14 +314,43 @@ function App() {
   }
 
   function reproducirLocal(item) {
+    if (esContenidoJamendo(item)) {
+      reproducirJamendo(item);
+      return;
+    }
+
     setJamendoActual(null);
     setPistaActual(item);
+    registrarEnHistorial(item);
   }
 
   function reproducirJamendo(track) {
     setPistaActual(null);
     setJamendoPreloadUrl(track.audioUrl);
     setJamendoActual(track);
+    registrarEnHistorial({ ...track, fuente: 'JAMENDO', tipo: 'JAMENDO' });
+  }
+
+  function registrarEnHistorial(item) {
+    if (!item?.id) {
+      return;
+    }
+
+    const historialItem = normalizarHistorialItem({
+      ...item,
+      contenidoId: item.id,
+      fuente: item.fuente || (esContenidoJamendo(item) ? 'JAMENDO' : 'LOCAL'),
+      reproducidoEn: new Date().toISOString()
+    });
+    setHistorial((actual) => [historialItem, ...actual.filter((entrada) => entrada.id !== historialItem.id)].slice(0, 20));
+
+    registrarReproduccion(historialItem)
+      .then((guardado) => {
+        setHistorial((actual) => [normalizarHistorialItem(guardado), ...actual.filter((entrada) => entrada.id !== historialItem.id)].slice(0, 20));
+        return cargarRecomendaciones();
+      })
+      .then(setRecomendaciones)
+      .catch((error) => setMensaje(error.message));
   }
 
   function preloadJamendo(track) {
@@ -249,6 +374,30 @@ function App() {
     }
   }
 
+  async function handleAgregarJamendoAPlaylist(track, playlistId) {
+    if (!playlistId) {
+      setMensaje('Selecciona una playlist para agregar contenido de Jamendo.');
+      return;
+    }
+
+    try {
+      const playlistActualizada = normalizarPlaylist(await agregarJamendoAPlaylist(playlistId, track));
+      reemplazarPlaylist(playlistActualizada);
+      setMensaje(`"${track.titulo}" fue agregada a ${playlistActualizada.nombre}.`);
+    } catch (error) {
+      setMensaje(error.message);
+    }
+  }
+
+  function reemplazarPlaylist(playlistActualizada) {
+    setUsuario((actual) => ({
+      ...actual,
+      playlist: (actual.playlist || []).map((playlist) => (
+        playlist.id === playlistActualizada.id ? playlistActualizada : playlist
+      ))
+    }));
+  }
+
   if (!authReady) {
     return (
       <main className="auth-shell">
@@ -263,7 +412,13 @@ function App() {
   if (!usuario) {
     return (
       <main className="auth-shell">
-        <AuthPanel onLogin={handleLogin} onRegistro={handleRegistro} mensaje={mensaje} />
+        <AuthPanel
+          onLogin={handleLogin}
+          onRegistro={handleRegistro}
+          onVerificarCodigo={handleVerificarCodigo}
+          onReenviarVerificacion={handleReenviarVerificacion}
+          mensaje={mensaje}
+        />
       </main>
     );
   }
@@ -278,6 +433,8 @@ function App() {
         onGoHome={() => setActiveView({ type: 'home' })}
         onOpenPlaylist={(playlistId) => setActiveView({ type: 'playlist', playlistId })}
         onOpenFavorites={() => setActiveView({ type: 'favorites' })}
+        onOpenHistory={() => setActiveView({ type: 'history' })}
+        onOpenRecommendations={() => setActiveView({ type: 'recommendations' })}
         onCreatePlaylist={() => setCreatePlaylistOpen(true)}
         onPlay={reproducirLocal}
       />
@@ -287,6 +444,8 @@ function App() {
         activePlaylist={activePlaylist}
         catalogo={catalogo}
         favoritos={favoritos}
+        historial={historial}
+        recomendaciones={recomendaciones}
         favoritosIds={favoritosIds}
         mensaje={mensaje}
         pistaActual={pistaActual}
@@ -301,14 +460,18 @@ function App() {
         onPreloadJamendo={preloadJamendo}
         onToggleFavorito={toggleFavorito}
         onAddMusic={() => setAddMusicOpen(true)}
+        onRemoveFromPlaylist={handleRemoverDePlaylist}
+        onDeletePlaylist={handleEliminarPlaylist}
         onBuscarJamendo={handleBuscarJamendo}
+        playlists={playlistsVisibles}
+        onAddJamendoToPlaylist={handleAgregarJamendoAPlaylist}
         onLogout={handleLogout}
       />
 
       <PlayerBar
         pista={pistaActual}
         jamendoTrack={jamendoActual}
-        queue={activeView.type === 'favorites' ? favoritos : catalogo}
+        queue={obtenerColaReproduccion(activeView, activePlaylist, favoritos, catalogo, historial, recomendaciones)}
         onPlayLocal={reproducirLocal}
       />
 
@@ -346,12 +509,42 @@ function normalizarPlaylist(playlist) {
   };
 }
 
+function normalizarHistorialItem(item) {
+  return {
+    ...item,
+    id: item.contenidoId || item.id,
+    historialId: item.id,
+    fuente: item.fuente || (item.audioUrl ? 'JAMENDO' : 'LOCAL'),
+    tipo: item.tipo || (item.fuente === 'JAMENDO' ? 'JAMENDO' : 'CONTENIDO_AUDIO')
+  };
+}
+
 function calcularDuracion(items) {
   return items.reduce((total, item) => total + (item.duracionSegundos || 0), 0);
 }
 
+function esContenidoJamendo(item) {
+  return item?.tipo === 'JAMENDO' || item?.fuente === 'JAMENDO' || Boolean(item?.audioUrl);
+}
+
 function esPlaylistFavoritos(playlist) {
   return playlist?.nombre?.trim().toLowerCase() === 'favoritos';
+}
+
+function obtenerColaReproduccion(activeView, activePlaylist, favoritos, catalogo, historial, recomendaciones) {
+  if (activeView.type === 'playlist' && activePlaylist) {
+    return activePlaylist.contenidos || [];
+  }
+  if (activeView.type === 'favorites') {
+    return favoritos;
+  }
+  if (activeView.type === 'history') {
+    return historial;
+  }
+  if (activeView.type === 'recommendations') {
+    return recomendaciones;
+  }
+  return catalogo;
 }
 
 export default App;

@@ -114,7 +114,8 @@ input {
 .search-input,
 .add-music-filters input,
 .modal-form input,
-.online-search input {
+.online-search input,
+.online-actions-bar select {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -129,7 +130,8 @@ input {
 .search-input:focus,
 .add-music-filters input:focus,
 .modal-form input:focus,
-.online-search input:focus {
+.online-search input:focus,
+.online-actions-bar select:focus {
   border-color: rgba(30, 215, 96, 0.8);
   box-shadow: 0 0 0 4px rgba(30, 215, 96, 0.12);
   background: rgba(10, 13, 20, 0.96);
@@ -137,7 +139,7 @@ input {
 
 .mode-switch {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -148,6 +150,7 @@ input {
 .mode-switch button,
 .ghost-button,
 .primary-button,
+.danger-button,
 .create-playlist-button,
 .load-more-button,
 .online-search button,
@@ -164,6 +167,7 @@ input {
 .mode-switch button:hover,
 .ghost-button:hover,
 .primary-button:hover,
+.danger-button:hover,
 .create-playlist-button:hover,
 .load-more-button:hover,
 .online-search button:hover,
@@ -184,6 +188,12 @@ input {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   font-weight: 800;
   box-shadow: 0 12px 30px rgba(30, 215, 96, 0.18);
+}
+
+.danger-button {
+  border-color: rgba(255, 97, 116, 0.42);
+  color: #ffd9de;
+  background: rgba(255, 97, 116, 0.12);
 }
 
 .form-error,
@@ -311,6 +321,7 @@ input {
 .favorite-list small,
 .playlist-list small,
 .track-card small,
+.track-card em,
 .online-track small,
 .online-track em,
 .player-meta small {
@@ -434,6 +445,12 @@ input {
   padding: 18px;
 }
 
+.track-play-zone em {
+  color: var(--accent-2);
+  font-style: normal;
+  font-size: 12px;
+}
+
 .track-type {
   width: fit-content;
   border: 1px solid rgba(30, 215, 96, 0.38);
@@ -483,6 +500,27 @@ input {
   animation: heartPop 0.28s ease;
 }
 
+.remove-track-button {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  border: 1px solid rgba(255, 97, 116, 0.35);
+  border-radius: 999px;
+  color: #ffd9de;
+  background: rgba(255, 97, 116, 0.12);
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.playlist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .catalog-switch {
   width: fit-content;
   display: grid;
@@ -513,6 +551,20 @@ input {
   color: var(--muted-strong);
 }
 
+.online-actions-bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px;
+}
+
+.online-actions-bar label {
+  width: min(320px, 100%);
+  display: grid;
+  gap: 8px;
+  color: var(--muted-strong);
+  font-size: 13px;
+}
+
 .online-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
@@ -521,13 +573,25 @@ input {
 
 .online-track {
   display: grid;
-  grid-template-columns: 86px 1fr;
   gap: 12px;
+  position: relative;
   text-align: left;
   border-radius: 18px;
   color: var(--text);
   padding: 10px;
   transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.online-track-main {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-align: left;
 }
 
 .online-track.active,
@@ -557,6 +621,28 @@ input {
 
 .online-track em {
   font-style: normal;
+  font-size: 12px;
+}
+
+.online-track-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.online-track-actions .favorite-button {
+  position: static;
+  flex: 0 0 auto;
+}
+
+.online-track-actions .favorite-button span {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ghost-button.compact {
+  padding: 8px 12px;
   font-size: 12px;
 }
 
@@ -603,7 +689,8 @@ input {
   width: min(520px, 48vw);
 }
 
-.local-player button {
+.local-player button,
+.external-player button {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.06);
@@ -611,7 +698,8 @@ input {
   padding: 9px 11px;
 }
 
-.local-player button:disabled {
+.local-player button:disabled,
+.external-player button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
@@ -769,6 +857,7 @@ input {
   .external-player,
   .online-search,
   .add-music-filters,
+  .playlist-actions,
   .hero-band,
   .playlist-hero {
     grid-template-columns: 1fr;

@@ -6,6 +6,8 @@ function Sidebar({
   onGoHome,
   onOpenPlaylist,
   onOpenFavorites,
+  onOpenHistory,
+  onOpenRecommendations,
   onCreatePlaylist,
   onPlay
 }) {
@@ -27,10 +29,16 @@ function Sidebar({
           Tus favoritos
           <small>{favoritos.length}</small>
         </button>
+        <button className={activeView.type === 'history' ? 'active' : ''} onClick={onOpenHistory}>
+          Historial
+        </button>
+        <button className={activeView.type === 'recommendations' ? 'active' : ''} onClick={onOpenRecommendations}>
+          Recomendaciones
+        </button>
       </nav>
 
       <button className="create-playlist-button" onClick={onCreatePlaylist}>
-        Crear nueva Playlist
+        Crear nueva playlist
       </button>
 
       <section className="sidebar-section">
@@ -66,7 +74,7 @@ function Sidebar({
               <small>{item.artista || item.anfitrion || 'Sin autor'}</small>
             </button>
           ))}
-          {favoritos.length === 0 && <p className="empty-note">Marca contenido con el corazón.</p>}
+          {favoritos.length === 0 && <p className="empty-note">Marca contenido con favoritos.</p>}
         </div>
       </section>
     </aside>

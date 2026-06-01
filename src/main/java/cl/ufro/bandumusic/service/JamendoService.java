@@ -96,6 +96,7 @@ public class JamendoService {
                     track.path("duration").asInt(),
                     track.path("artist_name").asText(),
                     track.path("album_name").asText(),
+                    extraerGenero(track),
                     track.path("image").asText(),
                     audioUrl,
                     track.path("license_ccurl").asText(),
@@ -105,5 +106,13 @@ public class JamendoService {
         }
 
         return resultados;
+    }
+
+    private String extraerGenero(JsonNode track) {
+        JsonNode generos = track.path("musicinfo").path("tags").path("genres");
+        if (generos.isArray() && !generos.isEmpty()) {
+            return generos.get(0).asText();
+        }
+        return null;
     }
 }

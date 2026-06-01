@@ -2,6 +2,8 @@ package cl.ufro.bandumusic.dto.response;
 
 import cl.ufro.bandumusic.model.Cancion;
 import cl.ufro.bandumusic.model.ContenidoAudio;
+import cl.ufro.bandumusic.model.PlaylistItem;
+import cl.ufro.bandumusic.model.PlaylistItemTipo;
 import cl.ufro.bandumusic.model.Podcast;
 
 public record ContenidoAudioResponse(
@@ -12,7 +14,13 @@ public record ContenidoAudioResponse(
         String artista,
         String album,
         String anfitrion,
-        Integer numeroDeEpisodios
+        Integer numeroDeEpisodios,
+        String genero,
+        String imagenUrl,
+        String audioUrl,
+        String licenciaUrl,
+        String jamendoUrl,
+        String fuente
 ) {
     public static ContenidoAudioResponse from(ContenidoAudio audio) {
         if (audio instanceof Cancion cancion) {
@@ -24,7 +32,13 @@ public record ContenidoAudioResponse(
                     cancion.getArtista(),
                     cancion.getAlbum(),
                     null,
-                    null
+                    null,
+                    GeneroInference.inferir(audio),
+                    null,
+                    null,
+                    null,
+                    null,
+                    "LOCAL"
             );
         }
 
@@ -37,7 +51,13 @@ public record ContenidoAudioResponse(
                     null,
                     null,
                     podcast.getAnfitrion(),
-                    podcast.getNumeroDeEpisodios()
+                    podcast.getNumeroDeEpisodios(),
+                    GeneroInference.inferir(audio),
+                    null,
+                    null,
+                    null,
+                    null,
+                    "LOCAL"
             );
         }
 
@@ -49,7 +69,36 @@ public record ContenidoAudioResponse(
                 null,
                 null,
                 null,
-                null
+                null,
+                GeneroInference.inferir(audio),
+                null,
+                null,
+                null,
+                null,
+                "LOCAL"
+        );
+    }
+
+    public static ContenidoAudioResponse from(PlaylistItem item) {
+        if (item.getOrigen() == PlaylistItemTipo.LOCAL && item.getContenidoLocal() != null) {
+            return from(item.getContenidoLocal());
+        }
+
+        return new ContenidoAudioResponse(
+                item.getExternalId(),
+                item.getTitulo(),
+                item.getDuracionSegundos(),
+                "JAMENDO",
+                item.getArtista(),
+                item.getAlbum(),
+                null,
+                null,
+                item.getGenero(),
+                item.getImagenUrl(),
+                item.getAudioUrl(),
+                item.getLicenciaUrl(),
+                item.getJamendoUrl(),
+                "JAMENDO"
         );
     }
 }
