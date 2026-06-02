@@ -124,6 +124,7 @@ public class UsuarioService {
     }
 
     private void cargarPlaylists(Usuario usuario) {
-        usuario.getPlaylist().forEach(playlist -> playlist.getContenidos().size());
+        // La carga de playlists y contenidos ahora se maneja mediante @EntityGraph en el repositorio
+        // para evitar el problema de consultas N+1.
     }
 }

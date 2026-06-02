@@ -41,9 +41,14 @@ async function request(path, options = {}) {
 
 async function safeJson(response) {
   try {
-    return await response.json();
-  } catch {
-    return null;
+    const text = await response.text();
+    if (!text) {
+      return null;
+    }
+    return JSON.parse(text);
+  } catch (error) {
+    console.error('Failed to parse JSON response:', error);
+    throw new Error('El servidor respondio con un formato invalido.');
   }
 }
 

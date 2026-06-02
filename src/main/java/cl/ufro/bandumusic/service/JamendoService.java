@@ -6,10 +6,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,8 +20,18 @@ public class JamendoService {
 
     private static final String JAMENDO_TRACKS_URL = "https://api.jamendo.com/v3.0/tracks/";
 
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public JamendoService() {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout((int) Duration.ofSeconds(5).toMillis());
+        requestFactory.setReadTimeout((int) Duration.ofSeconds(5).toMillis());
+
+        this.restClient = RestClient.builder()
+                .requestFactory(requestFactory)
+                .build();
+    }
 
     @Value("${jamendo.client-id:}")
     private String clientId;
