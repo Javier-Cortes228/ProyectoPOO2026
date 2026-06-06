@@ -16,11 +16,11 @@ public interface UsuarioRepository extends JpaRepository<Usuario, String> {
 
     Optional<Usuario> findByCorreo(String correo);
 
-    @EntityGraph(attributePaths = {"playlist", "playlist.contenidos"})
+    @EntityGraph(attributePaths = "playlist")
     @Query("select u from Usuario u where u.correo = :correo")
     Optional<Usuario> findWithPlaylistByCorreo(@Param("correo") String correo);
 
-    @EntityGraph(attributePaths = {"playlist", "playlist.contenidos"})
+    @EntityGraph(attributePaths = "playlist")
     @Query("select u from Usuario u where u.id = :id")
     Optional<Usuario> findWithPlaylistById(@Param("id") String id);
 }

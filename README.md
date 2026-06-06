@@ -18,8 +18,9 @@ La arquitectura mantiene el catálogo local como núcleo del proyecto para respe
 
 - **Backend:** Java 21 + Spring Boot
 - **Base de datos:** PostgreSQL + Spring Data JPA
-- **Frontend:** React + Vite
-- **Seguridad:** BCrypt para contraseñas + JWT Bearer
+- **Frontend:** React + Vite + Tailwind CSS
+- **UI/Animaciones:** Tailwind CSS, Lucide React y Framer Motion
+- **Seguridad:** BCrypt para contraseñas + JWT en cookie HttpOnly
 - **Contenido local:** archivos `.mp3` servidos desde Spring Boot
 - **API externa complementaria:** Jamendo API
 
@@ -34,7 +35,9 @@ La arquitectura mantiene el catálogo local como núcleo del proyecto para respe
 - Favoritos persistidos como playlist especial del usuario.
 - Playlists mixtas con contenido local y referencias externas de Jamendo.
 - Historial simple de canciones recientemente reproducidas.
-- Recomendaciones basicas segun artista o genero detectado.
+- Recomendaciones mixtas con catalogo local y Jamendo segun artista o genero detectado.
+- Buscador global para catalogo local y Jamendo.
+- Reproductor personalizado con progreso, volumen, mute y controles de pista.
 
 ## Requisitos Académicos Cubiertos
 
@@ -46,7 +49,7 @@ La arquitectura mantiene el catálogo local como núcleo del proyecto para respe
 - Programación funcional: uso de `stream`, `filter`, `map`, `removeIf`.
 - Pruebas unitarias con JUnit.
 - Tecnologías extra: interfaz gráfica React/Vite, PostgreSQL e integración Jamendo API.
-- Autenticación con token JWT para proteger endpoints privados.
+- Autenticación con JWT en cookie `HttpOnly` para proteger endpoints privados.
 
 ## Configuración
 
@@ -59,6 +62,8 @@ DB_PASSWORD=postgres
 APP_CORS_ALLOWED_ORIGINS=http://127.0.0.1:5173,http://localhost:5173
 JWT_SECRET=usar_una_clave_larga_y_privada
 JWT_EXPIRATION_SECONDS=86400
+AUTH_COOKIE_SECURE=false
+AUTH_COOKIE_SAME_SITE=Lax
 JAMENDO_CLIENT_ID=
 JAMENDO_SEARCH_MAX_RESULTS=30
 ```
@@ -85,6 +90,12 @@ npm run dev
 
 El frontend Vite queda disponible en `http://127.0.0.1:5173` y usa proxy hacia el backend en `http://localhost:8080`.
 
+## Tailwind CSS
+
+El frontend usa Tailwind CSS como sistema principal de estilos. La configuracion esta en `frontend/tailwind.config.js` y define fuentes, colores, radios y sombras del rediseño actual. La utilidad `.glass` se declara en `frontend/src/index.css` y se reutiliza en paneles, sidebar, topbar y reproductor.
+
+Los componentes nuevos deben usar los tokens `background`, `surface`, `primary`, `secondary`, `textMain` y `textSub` para mantener consistencia visual.
+
 ## Demo
 
 Usuarios semilla:
@@ -97,17 +108,20 @@ El catálogo local se carga automáticamente si la base de datos está vacía. E
 ## Actualizacion de autenticacion y Jamendo
 
 - El registro crea la cuenta y genera un codigo temporal de 6 digitos. La cuenta no puede iniciar sesion hasta verificar el codigo.
-- El login entrega JWT Bearer y el cierre de sesion se realiza eliminando el token del cliente.
+- El login guarda el JWT en una cookie segura `HttpOnly`; el frontend no almacena tokens en `localStorage`.
+- El cierre de sesion llama al backend para limpiar la cookie de autenticacion.
 - `MAIL_ENABLED=false` deja el codigo de verificacion en los logs del backend para desarrollo local. Para envio real se debe configurar SMTP y usar `MAIL_ENABLED=true`.
 - Las canciones de Jamendo agregadas a playlists o favoritos se guardan como referencias externas, no como archivos descargados.
 - Una misma playlist puede mezclar contenido local (`CANCION`/`PODCAST`) y contenido online (`JAMENDO`).
 - El historial registra metadatos basicos de cada reproduccion, tanto local como Jamendo, sin descargar archivos externos.
-- Las recomendaciones usan el historial reciente para sugerir contenido local relacionado por artista o genero. Si no hay coincidencias, entrega sugerencias del catalogo local no escuchadas recientemente.
+- Las recomendaciones usan el historial reciente para sugerir contenido local y resultados de Jamendo relacionados por artista o genero. Si Jamendo no esta configurado o no responde, el sistema mantiene recomendaciones locales.
 
 Variables nuevas:
 
 ```properties
 FRONTEND_BASE_URL=http://127.0.0.1:5173
+AUTH_COOKIE_SECURE=false
+AUTH_COOKIE_SAME_SITE=Lax
 EMAIL_VERIFICATION_EXPIRATION_MINUTES=10
 EMAIL_VERIFICATION_MAX_ATTEMPTS=5
 EMAIL_VALIDATION_DNS_ENABLED=true

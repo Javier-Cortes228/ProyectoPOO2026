@@ -6,6 +6,7 @@ import cl.ufro.bandumusic.exception.CorreoNoVerificadoException;
 import cl.ufro.bandumusic.exception.CredencialesInvalidasException;
 import cl.ufro.bandumusic.exception.UsuarioDuplicadoException;
 import cl.ufro.bandumusic.model.Usuario;
+import cl.ufro.bandumusic.repository.PlayListRepository;
 import cl.ufro.bandumusic.repository.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PlayListRepository playListRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerificationService;
     private final EmailAddressValidator emailAddressValidator;
@@ -25,12 +27,14 @@ public class UsuarioService {
 
     public UsuarioService(
             UsuarioRepository usuarioRepository,
+            PlayListRepository playListRepository,
             PasswordEncoder passwordEncoder,
             EmailVerificationService emailVerificationService,
             EmailAddressValidator emailAddressValidator,
             UserInputValidator userInputValidator
     ) {
         this.usuarioRepository = usuarioRepository;
+        this.playListRepository = playListRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailVerificationService = emailVerificationService;
         this.emailAddressValidator = emailAddressValidator;
@@ -124,7 +128,10 @@ public class UsuarioService {
     }
 
     private void cargarPlaylists(Usuario usuario) {
-        // La carga de playlists y contenidos ahora se maneja mediante @EntityGraph en el repositorio
-        // para evitar el problema de consultas N+1.
+        usuario.getPlaylist().forEach(playlist -> {
+            playListRepository.findById(playlist.getId())
+                    .ifPresent(playlistCargada -> playlistCargada.getContenidos().size());
+            playlist.getContenidos().size();
+        });
     }
 }

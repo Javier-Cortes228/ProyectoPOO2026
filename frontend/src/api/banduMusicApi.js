@@ -2,22 +2,15 @@ const JSON_HEADERS = {
   'Content-Type': 'application/json'
 };
 
-let authToken = '';
-
-export function setAuthToken(token) {
-  authToken = token || '';
-}
-
 async function request(path, options = {}) {
   const headers = {
     ...(options.body ? JSON_HEADERS : {}),
-    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     ...(options.headers || {})
   };
 
   let response;
   try {
-    response = await fetch(path, { ...options, headers });
+    response = await fetch(path, { ...options, headers, credentials: 'include' });
   } catch {
     throw new Error('No se pudo conectar con el backend. Verifica que Spring Boot este corriendo en http://localhost:8080.');
   }
@@ -46,9 +39,8 @@ async function safeJson(response) {
       return null;
     }
     return JSON.parse(text);
-  } catch (error) {
-    console.error('Failed to parse JSON response:', error);
-    throw new Error('El servidor respondio con un formato invalido.');
+  } catch {
+    return null;
   }
 }
 
@@ -69,6 +61,12 @@ export function registrar(nombreUsuario, correo, contrasena) {
 
 export function obtenerUsuarioActual() {
   return request('/api/usuarios/me');
+}
+
+export function logout() {
+  return request('/api/usuarios/logout', {
+    method: 'POST'
+  });
 }
 
 export function verificarCorreo(token) {

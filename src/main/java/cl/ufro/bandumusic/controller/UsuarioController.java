@@ -1,5 +1,6 @@
 package cl.ufro.bandumusic.controller;
 
+import cl.ufro.bandumusic.config.AuthCookieProperties;
 import cl.ufro.bandumusic.dto.request.LoginRequest;
 import cl.ufro.bandumusic.dto.request.RegistroUsuarioRequest;
 import cl.ufro.bandumusic.dto.request.VerificacionCorreoRequest;
@@ -13,6 +14,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
@@ -30,10 +33,16 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
     private final JwtService jwtService;
+    private final AuthCookieProperties authCookieProperties;
 
-    public UsuarioController(UsuarioService usuarioService, JwtService jwtService) {
+    public UsuarioController(
+            UsuarioService usuarioService,
+            JwtService jwtService,
+            AuthCookieProperties authCookieProperties
+    ) {
         this.usuarioService = usuarioService;
         this.jwtService = jwtService;
+        this.authCookieProperties = authCookieProperties;
     }
 
     @PostMapping("/registrar")
@@ -47,7 +56,16 @@ public class UsuarioController {
     public ResponseEntity<AuthResponse> loginUsuario(@Valid @RequestBody LoginRequest request) {
         Usuario usuario = usuarioService.login(request);
         String token = jwtService.generarToken(usuario.getCorreo());
-        return ResponseEntity.ok(AuthResponse.bearer(token, UsuarioResponse.from(usuario)));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, crearCookieAutenticacion(token).toString())
+                .body(AuthResponse.cookie(UsuarioResponse.from(usuario)));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<MensajeResponse> cerrarSesion() {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, limpiarCookieAutenticacion().toString())
+                .body(new MensajeResponse("Sesion cerrada correctamente."));
     }
 
     @GetMapping("/me")
@@ -81,5 +99,25 @@ public class UsuarioController {
     ) {
         usuarioService.reenviarVerificacion(correo);
         return ResponseEntity.ok(new MensajeResponse("Si la cuenta existe y aun no esta verificada, se envio un nuevo codigo."));
+    }
+
+    private ResponseCookie crearCookieAutenticacion(String token) {
+        return ResponseCookie.from(AuthCookieProperties.COOKIE_NAME, token)
+                .httpOnly(true)
+                .secure(authCookieProperties.isSecure())
+                .sameSite(authCookieProperties.getSameSite())
+                .path("/")
+                .maxAge(authCookieProperties.getExpirationSeconds())
+                .build();
+    }
+
+    private ResponseCookie limpiarCookieAutenticacion() {
+        return ResponseCookie.from(AuthCookieProperties.COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(authCookieProperties.isSecure())
+                .sameSite(authCookieProperties.getSameSite())
+                .path("/")
+                .maxAge(0)
+                .build();
     }
 }

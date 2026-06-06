@@ -101,4 +101,23 @@ public record ContenidoAudioResponse(
                 "JAMENDO"
         );
     }
+
+    public static ContenidoAudioResponse from(JamendoTrackResponse track) {
+        return new ContenidoAudioResponse(
+                track.id(),
+                track.titulo(),
+                track.duracionSegundos(),
+                "JAMENDO",
+                track.artista(),
+                track.album(),
+                null,
+                null,
+                track.genero(),
+                track.imagenUrl(),
+                track.audioUrl(),
+                track.licenciaUrl(),
+                track.jamendoUrl(),
+                "JAMENDO"
+        );
+    }
 }

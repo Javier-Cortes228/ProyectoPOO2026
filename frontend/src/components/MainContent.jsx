@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, LogOut, Bell } from 'lucide-react';
 import JamendoSection from './JamendoSection.jsx';
@@ -35,17 +35,44 @@ function MainContent({
 }) {
   const [busqueda, setBusqueda] = useState('');
   const [catalogoActivo, setCatalogoActivo] = useState('local');
+  const ultimaBusquedaGlobal = useRef('');
+  const filtroGlobal = busqueda.trim().toLowerCase();
 
   const catalogoFiltrado = useMemo(() => {
-    const filtro = busqueda.trim().toLowerCase();
-    if (!filtro) {
+    if (!filtroGlobal) {
       return catalogo;
     }
+    return catalogo.filter((item) => coincideConFiltro(item, filtroGlobal));
+  }, [catalogo, filtroGlobal]);
 
-    return catalogo.filter((item) => coincideConFiltro(item, filtro));
-  }, [catalogo, busqueda]);
+  const jamendoFiltrado = useMemo(() => {
+    if (!filtroGlobal) {
+      return jamendoResultados;
+    }
+    return jamendoResultados.filter((item) => coincideConFiltro(item, filtroGlobal));
+  }, [jamendoResultados, filtroGlobal]);
 
   const favoriteSet = useMemo(() => new Set(favoritosIds), [favoritosIds]);
+
+  useEffect(() => {
+    if (activeView.type !== 'home' || filtroGlobal.length < 2) {
+      if (filtroGlobal.length === 0) {
+        ultimaBusquedaGlobal.current = '';
+      }
+      return;
+    }
+
+    if (ultimaBusquedaGlobal.current === filtroGlobal) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      ultimaBusquedaGlobal.current = filtroGlobal;
+      onBuscarJamendo(busqueda).catch((error) => onError(error.message));
+    }, 450);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [activeView.type, busqueda, filtroGlobal.length, onBuscarJamendo, onError]);
 
   let content;
 
@@ -66,8 +93,8 @@ function MainContent({
     content = (
       <LibrarySection
         title="Tus favoritos"
-        subtitle="Contenido marcado con corazón"
-        items={favoritos.filter((item) => coincideConFiltro(item, busqueda.trim().toLowerCase()))}
+        subtitle="Contenido marcado con favoritos"
+        items={favoritos.filter((item) => coincideConFiltro(item, filtroGlobal))}
         favoriteSet={favoriteSet}
         pistaActual={pistaActual}
         onPlay={onPlayLocal}
@@ -78,22 +105,22 @@ function MainContent({
     content = (
       <LibrarySection
         title="Historial reciente"
-        subtitle="Últimas canciones reproducidas"
-        items={(historial || []).filter((item) => coincideConFiltro(item, busqueda.trim().toLowerCase()))}
+        subtitle="Ultimas canciones reproducidas"
+        items={(historial || []).filter((item) => coincideConFiltro(item, filtroGlobal))}
         favoriteSet={favoriteSet}
         pistaActual={pistaActual}
         jamendoActual={jamendoActual}
         onPlay={onPlayLocal}
         onToggleFavorito={onToggleFavorito}
-        emptyMessage="Aún no hay reproducciones registradas."
+        emptyMessage="Aun no hay reproducciones registradas."
       />
     );
   } else if (activeView.type === 'recommendations') {
     content = (
       <LibrarySection
         title="Recomendaciones para ti"
-        subtitle="Descubre nuevos sonidos"
-        items={(recomendaciones || []).filter((item) => coincideConFiltro(item, busqueda.trim().toLowerCase()))}
+        subtitle="Contenido local y online sugerido para ti"
+        items={(recomendaciones || []).filter((item) => coincideConFiltro(item, filtroGlobal))}
         favoriteSet={favoriteSet}
         pistaActual={pistaActual}
         jamendoActual={jamendoActual}
@@ -106,33 +133,62 @@ function MainContent({
     content = (
       <div className="space-y-8">
         <HeroStats total={catalogo.length} favoritos={favoritos.length} />
-        <CatalogSwitch active={catalogoActivo} onChange={setCatalogoActivo} />
 
-        {catalogoActivo === 'local' ? (
-          <LibrarySection
-            title="Catálogo Local"
-            subtitle="Tu biblioteca personal"
-            items={catalogoFiltrado}
-            favoriteSet={favoriteSet}
-            pistaActual={pistaActual}
-            onPlay={onPlayLocal}
-            onToggleFavorito={onToggleFavorito}
-          />
+        {filtroGlobal ? (
+          <div className="space-y-10">
+            <LibrarySection
+              title="BanduMusic Hub"
+              subtitle="Encuentra tu próxima canción favorita."
+              items={catalogoFiltrado}
+              favoriteSet={favoriteSet}
+              pistaActual={pistaActual}
+              onPlay={onPlayLocal}
+              onToggleFavorito={onToggleFavorito}
+              emptyMessage="No hay coincidencias en el catalogo local."
+            />
+            <LibrarySection
+              title="Resultados online Jamendo"
+              subtitle="Coincidencias externas para tu busqueda"
+              items={jamendoFiltrado}
+              favoriteSet={favoriteSet}
+              pistaActual={pistaActual}
+              jamendoActual={jamendoActual}
+              onPlay={onPlayLocal}
+              onToggleFavorito={onToggleFavorito}
+              emptyMessage="No hay resultados online para esta busqueda."
+            />
+          </div>
         ) : (
-          <JamendoSection
-            resultados={jamendoResultados}
-            activeTrackId={jamendoActual?.id}
-            currentQuery={jamendoQuery}
-            hasMore={jamendoHasMore}
-            onBuscar={onBuscarJamendo}
-            onPlay={onPlayJamendo}
-            onPreload={onPreloadJamendo}
-            playlists={playlists}
-            favoriteSet={favoriteSet}
-            onToggleFavorito={onToggleFavorito}
-            onAddToPlaylist={onAddJamendoToPlaylist}
-            onError={onError}
-          />
+          <>
+            <CatalogSwitch active={catalogoActivo} onChange={setCatalogoActivo} />
+
+            {catalogoActivo === 'local' ? (
+              <LibrarySection
+                title="BanduMusic Hub"
+                subtitle="Encuentra tu próxima canción favorita."
+                items={catalogoFiltrado}
+                favoriteSet={favoriteSet}
+                pistaActual={pistaActual}
+                onPlay={onPlayLocal}
+                onToggleFavorito={onToggleFavorito}
+              />
+            ) : (
+              <JamendoSection
+                resultados={jamendoResultados}
+                activeTrackId={jamendoActual?.id}
+                currentQuery={jamendoQuery}
+                hasMore={jamendoHasMore}
+                onBuscar={onBuscarJamendo}
+                onPlay={onPlayJamendo}
+                onPreload={onPreloadJamendo}
+                playlists={playlists}
+                favoriteSet={favoriteSet}
+                onToggleFavorito={onToggleFavorito}
+                onAddToPlaylist={onAddJamendoToPlaylist}
+                onError={onError}
+              />
+            )}
+          </>
         )}
       </div>
     );
@@ -151,7 +207,7 @@ function MainContent({
         </AnimatePresence>
 
         <motion.div
-          key={activeView.type + (activePlaylist?.id || '') + catalogoActivo}
+          key={activeView.type + (activePlaylist?.id || '') + catalogoActivo + Boolean(filtroGlobal)}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
@@ -172,7 +228,7 @@ function Topbar({ busqueda, setBusqueda, onLogout }) {
           className="w-full bg-surface/50 border border-white/10 rounded-full pl-12 pr-4 py-2.5 text-sm text-textMain focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-textSub"
           value={busqueda}
           onChange={(event) => setBusqueda(event.target.value)}
-          placeholder="Buscar por canción o artista..."
+          placeholder="Buscar cancion, artista, album o genero..."
         />
       </div>
       <div className="flex items-center gap-4">
@@ -199,7 +255,7 @@ function CatalogSwitch({ active, onChange }) {
         className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${active === 'local' ? 'bg-primary text-white shadow-glow' : 'text-textSub hover:text-white'}`}
         onClick={() => onChange('local')}
       >
-        Catálogo Local
+        BanduMusic Hub
       </button>
       <button
         type="button"
@@ -274,7 +330,7 @@ function LibrarySection({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {items.map((item) => (
           <TrackCard
-            key={item.historialId || item.id}
+            key={item.historialId || `${item.fuente || 'LOCAL'}-${item.id}`}
             item={item}
             active={pistaActual?.id === item.id || jamendoActual?.id === item.id}
             favorite={favoriteSet.has(item.id)}
@@ -298,9 +354,17 @@ function coincideConFiltro(item, filtro) {
     return true;
   }
 
-  const titulo = item.titulo || '';
-  const creador = item.artista || item.anfitrion || '';
-  return titulo.toLowerCase().includes(filtro) || creador.toLowerCase().includes(filtro);
+  const campos = [
+    item.titulo,
+    item.artista,
+    item.anfitrion,
+    item.album,
+    item.genero,
+    item.tipo,
+    item.fuente
+  ];
+
+  return campos.some((campo) => (campo || '').toLowerCase().includes(filtro));
 }
 
 export default MainContent;

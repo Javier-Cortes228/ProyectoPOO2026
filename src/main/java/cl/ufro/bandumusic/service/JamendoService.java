@@ -43,8 +43,12 @@ public class JamendoService {
         return buscarTracks(consulta, maxResults, 0);
     }
 
+    public boolean estaConfigurado() {
+        return clientId != null && !clientId.isBlank();
+    }
+
     public List<JamendoTrackResponse> buscarTracks(String consulta, int limit, int offset) {
-        if (clientId == null || clientId.isBlank()) {
+        if (!estaConfigurado()) {
             throw new IntegracionExternaException("El Client ID de Jamendo no esta configurado.");
         }
 

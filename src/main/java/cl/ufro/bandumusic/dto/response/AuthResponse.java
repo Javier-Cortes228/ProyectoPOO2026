@@ -8,4 +8,8 @@ public record AuthResponse(
     public static AuthResponse bearer(String token, UsuarioResponse usuario) {
         return new AuthResponse(token, "Bearer", usuario);
     }
+
+    public static AuthResponse cookie(UsuarioResponse usuario) {
+        return new AuthResponse(null, "Cookie", usuario);
+    }
 }

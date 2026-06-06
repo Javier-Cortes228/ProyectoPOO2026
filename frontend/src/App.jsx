@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   agregarJamendoAPlaylist,
   agregarContenidoAPlaylist,
@@ -9,12 +9,12 @@ import {
   crearPlaylist,
   eliminarPlaylist,
   login,
+  logout,
   obtenerUsuarioActual,
   reenviarVerificacion,
   registrarReproduccion,
   registrar,
   removerContenidoDePlaylist,
-  setAuthToken,
   verificarCodigoCorreo,
   verificarCorreo
 } from './api/banduMusicApi.js';
@@ -25,11 +25,8 @@ import MainContent from './components/MainContent.jsx';
 import PlayerBar from './components/PlayerBar.jsx';
 import Sidebar from './components/Sidebar.jsx';
 
-const TOKEN_STORAGE_KEY = 'bandumusic:auth-token';
-
 function App() {
   const [usuario, setUsuario] = useState(null);
-  const [token, setToken] = useState(() => window.localStorage.getItem(TOKEN_STORAGE_KEY) || '');
   const [authReady, setAuthReady] = useState(false);
   const [catalogo, setCatalogo] = useState([]);
   const [historial, setHistorial] = useState([]);
@@ -65,25 +62,9 @@ function App() {
   }, []);
 
   useEffect(() => {
-    setAuthToken(token);
-
-    if (token) {
-      window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
-      return;
-    }
-
-    window.localStorage.removeItem(TOKEN_STORAGE_KEY);
-  }, [token]);
-
-  useEffect(() => {
-    if (!token) {
-      setAuthReady(true);
-      return;
-    }
-
     obtenerUsuarioActual()
       .then((data) => setUsuario(normalizarUsuario(data)))
-      .catch(() => cerrarSesionLocal())
+      .catch(() => limpiarSesionLocal())
       .finally(() => setAuthReady(true));
   }, []);
 
@@ -129,8 +110,6 @@ function App() {
   async function handleLogin(form) {
     setMensaje('');
     const data = await login(form.correo, form.contrasena);
-    setToken(data.token);
-    setAuthToken(data.token);
     setUsuario(normalizarUsuario(data.usuario));
     setActiveView({ type: 'home' });
   }
@@ -153,13 +132,17 @@ function App() {
     setMensaje(data.mensaje || 'Correo verificado correctamente. Ya puedes iniciar sesion.');
   }
 
-  function handleLogout() {
-    cerrarSesionLocal();
+  async function handleLogout() {
+    try {
+      await logout();
+    } catch {
+      // Si el backend no responde, igualmente se limpia el estado local de la UI.
+    } finally {
+      limpiarSesionLocal();
+    }
   }
 
-  function cerrarSesionLocal() {
-    setToken('');
-    setAuthToken('');
+  function limpiarSesionLocal() {
     setUsuario(null);
     setCatalogo([]);
     setHistorial([]);
@@ -364,7 +347,7 @@ function App() {
     }
   }
 
-  async function handleBuscarJamendo(query, append = false) {
+  const handleBuscarJamendo = useCallback(async function handleBuscarJamendo(query, append = false) {
     setMensaje('');
     const limit = 30;
     const offset = append ? jamendoOffset : 0;
@@ -377,7 +360,7 @@ function App() {
     if (resultados[0]) {
       setJamendoPreloadUrl(resultados[0].audioUrl);
     }
-  }
+  }, [jamendoOffset]);
 
   async function handleAgregarJamendoAPlaylist(track, playlistId) {
     if (!playlistId) {
@@ -476,7 +459,16 @@ function App() {
       <PlayerBar
         pista={pistaActual}
         jamendoTrack={jamendoActual}
-        queue={obtenerColaReproduccion(activeView, activePlaylist, favoritos, catalogo, historial, recomendaciones)}
+        queue={obtenerColaReproduccion(
+          activeView,
+          activePlaylist,
+          favoritos,
+          catalogo,
+          historial,
+          recomendaciones,
+          jamendoResultados,
+          jamendoActual
+        )}
         onPlayLocal={reproducirLocal}
       />
 
@@ -537,7 +529,16 @@ function esPlaylistFavoritos(playlist) {
   return playlist?.nombre?.trim().toLowerCase() === 'favoritos';
 }
 
-function obtenerColaReproduccion(activeView, activePlaylist, favoritos, catalogo, historial, recomendaciones) {
+function obtenerColaReproduccion(
+  activeView,
+  activePlaylist,
+  favoritos,
+  catalogo,
+  historial,
+  recomendaciones,
+  jamendoResultados,
+  jamendoActual
+) {
   if (activeView.type === 'playlist' && activePlaylist) {
     return activePlaylist.contenidos || [];
   }
@@ -549,6 +550,12 @@ function obtenerColaReproduccion(activeView, activePlaylist, favoritos, catalogo
   }
   if (activeView.type === 'recommendations') {
     return recomendaciones;
+  }
+  if (activeView.type === 'home' && jamendoActual) {
+    const resultados = jamendoResultados || [];
+    return resultados.some((item) => item.id === jamendoActual.id)
+      ? resultados
+      : [jamendoActual, ...resultados];
   }
   return catalogo;
 }
