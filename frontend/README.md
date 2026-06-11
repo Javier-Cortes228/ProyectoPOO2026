@@ -9,7 +9,8 @@ Frontend moderno de BanduMusic construido con React, Vite y Tailwind CSS.
 - Buscador global: cruza resultados locales y Jamendo.
 - Playlists y favoritos: soportan contenido local y referencias externas de Jamendo.
 - Historial y recomendaciones: muestran reproducciones recientes y sugerencias mixtas.
-- Autenticacion: usa cookie `HttpOnly`; el frontend no guarda JWT en `localStorage`.
+- Autenticacion: login, registro, verificacion de correo y recuperacion de contraseña conectados al backend.
+- Sesion: usa cookie `HttpOnly`; el frontend no guarda JWT en `localStorage`.
 - Reproductor: controles personalizados de play/pause, anterior/siguiente, progreso, volumen y mute.
 
 ## Tailwind CSS

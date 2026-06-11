@@ -77,6 +77,43 @@ public class EmailService {
         }
     }
 
+    public void enviarCodigoRecuperacion(String destinatario, String nombreUsuario, String codigo, long expirationMinutes) {
+        if (!mailEnabled) {
+            LOGGER.info("Codigo de recuperacion de contrasena para {}: {} (expira en {} minutos)", destinatario, codigo, expirationMinutes);
+            return;
+        }
+
+        validarConfiguracionSmtp();
+
+        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
+        if (mailSender == null) {
+            throw new IntegracionExternaException("El envio de correo esta habilitado, pero JavaMailSender no esta configurado.");
+        }
+
+        SimpleMailMessage mensaje = new SimpleMailMessage();
+        mensaje.setFrom(mailFrom);
+        mensaje.setTo(destinatario);
+        mensaje.setSubject("Codigo para restablecer tu contrasena BanduMusic");
+        mensaje.setText("""
+                Hola %s,
+
+                Recibimos una solicitud para restablecer tu contrasena de BanduMusic.
+                Tu codigo de recuperacion es:
+                %s
+
+                El codigo expira en %d minutos. No lo compartas con nadie.
+
+                Si no solicitaste este cambio, puedes ignorar este correo.
+                """.formatted(nombreUsuario, codigo, expirationMinutes));
+        try {
+            mailSender.send(mensaje);
+            LOGGER.info("Codigo de recuperacion enviado a {} usando SMTP {}", destinatario, mailHost);
+        } catch (MailException ex) {
+            LOGGER.error("No fue posible enviar el codigo de recuperacion a {} usando SMTP {}", destinatario, mailHost, ex);
+            throw new IntegracionExternaException("No fue posible enviar el codigo de recuperacion. Revisa la configuracion SMTP del servidor.");
+        }
+    }
+
     private void validarConfiguracionSmtp() {
         if (estaVacio(mailHost)) {
             throw new IntegracionExternaException("MAIL_ENABLED esta activo, pero MAIL_HOST no esta configurado.");

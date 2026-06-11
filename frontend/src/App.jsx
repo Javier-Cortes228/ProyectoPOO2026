@@ -14,7 +14,10 @@ import {
   reenviarVerificacion,
   registrarReproduccion,
   registrar,
+  restablecerContrasena,
   removerContenidoDePlaylist,
+  solicitarRecuperacionContrasena,
+  verificarCodigoRecuperacion,
   verificarCodigoCorreo,
   verificarCorreo
 } from './api/banduMusicApi.js';
@@ -130,6 +133,24 @@ function App() {
     setMensaje('');
     const data = await verificarCodigoCorreo(form.correo, form.codigo);
     setMensaje(data.mensaje || 'Correo verificado correctamente. Ya puedes iniciar sesion.');
+  }
+
+  async function handleSolicitarRecuperacion(correo) {
+    setMensaje('');
+    const data = await solicitarRecuperacionContrasena(correo);
+    setMensaje(data.mensaje || 'Si el correo existe, enviamos un codigo de recuperacion.');
+  }
+
+  async function handleVerificarCodigoRecuperacion(correo, codigo) {
+    setMensaje('');
+    const data = await verificarCodigoRecuperacion(correo, codigo);
+    setMensaje(data.mensaje || 'Codigo validado. Ahora puedes definir una nueva contrasena.');
+  }
+
+  async function handleRestablecerContrasena(correo, codigo, nuevaContrasena) {
+    setMensaje('');
+    const data = await restablecerContrasena(correo, codigo, nuevaContrasena);
+    setMensaje(data.mensaje || 'Contrasena actualizada correctamente. Ya puedes iniciar sesion.');
   }
 
   async function handleLogout() {
@@ -405,6 +426,9 @@ function App() {
           onRegistro={handleRegistro}
           onVerificarCodigo={handleVerificarCodigo}
           onReenviarVerificacion={handleReenviarVerificacion}
+          onSolicitarRecuperacion={handleSolicitarRecuperacion}
+          onVerificarCodigoRecuperacion={handleVerificarCodigoRecuperacion}
+          onRestablecerContrasena={handleRestablecerContrasena}
           mensaje={mensaje}
         />
       </main>

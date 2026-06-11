@@ -2,8 +2,11 @@ package cl.ufro.bandumusic.controller;
 
 import cl.ufro.bandumusic.config.AuthCookieProperties;
 import cl.ufro.bandumusic.dto.request.LoginRequest;
+import cl.ufro.bandumusic.dto.request.RecuperacionContrasenaRequest;
 import cl.ufro.bandumusic.dto.request.RegistroUsuarioRequest;
+import cl.ufro.bandumusic.dto.request.RestablecerContrasenaRequest;
 import cl.ufro.bandumusic.dto.request.VerificacionCorreoRequest;
+import cl.ufro.bandumusic.dto.request.VerificacionRecuperacionRequest;
 import cl.ufro.bandumusic.dto.response.AuthResponse;
 import cl.ufro.bandumusic.dto.response.MensajeResponse;
 import cl.ufro.bandumusic.dto.response.UsuarioResponse;
@@ -99,6 +102,30 @@ public class UsuarioController {
     ) {
         usuarioService.reenviarVerificacion(correo);
         return ResponseEntity.ok(new MensajeResponse("Si la cuenta existe y aun no esta verificada, se envio un nuevo codigo."));
+    }
+
+    @PostMapping("/recuperacion/solicitar")
+    public ResponseEntity<MensajeResponse> solicitarRecuperacionContrasena(
+            @Valid @RequestBody RecuperacionContrasenaRequest request
+    ) {
+        usuarioService.solicitarRecuperacionContrasena(request.correo());
+        return ResponseEntity.ok(new MensajeResponse("Si el correo existe, enviamos un codigo de recuperacion."));
+    }
+
+    @PostMapping("/recuperacion/verificar")
+    public ResponseEntity<MensajeResponse> verificarCodigoRecuperacion(
+            @Valid @RequestBody VerificacionRecuperacionRequest request
+    ) {
+        usuarioService.verificarCodigoRecuperacion(request.correo(), request.codigo());
+        return ResponseEntity.ok(new MensajeResponse("Codigo validado. Ahora puedes definir una nueva contrasena."));
+    }
+
+    @PostMapping("/recuperacion/restablecer")
+    public ResponseEntity<MensajeResponse> restablecerContrasena(
+            @Valid @RequestBody RestablecerContrasenaRequest request
+    ) {
+        usuarioService.restablecerContrasena(request.correo(), request.codigo(), request.nuevaContrasena());
+        return ResponseEntity.ok(new MensajeResponse("Contrasena actualizada correctamente. Ya puedes iniciar sesion."));
     }
 
     private ResponseCookie crearCookieAutenticacion(String token) {

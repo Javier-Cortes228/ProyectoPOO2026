@@ -35,6 +35,9 @@ public class SecurityConfig {
                                 "/api/usuarios/verificar",
                                 "/api/usuarios/verificar-codigo",
                                 "/api/usuarios/reenviar-verificacion",
+                                "/api/usuarios/recuperacion/solicitar",
+                                "/api/usuarios/recuperacion/verificar",
+                                "/api/usuarios/recuperacion/restablecer",
                                 "/api/usuarios/logout"
                         ).permitAll()
                         .requestMatchers("/audio/**").permitAll()

@@ -23,10 +23,12 @@ function AuthPanel({
         confirmarContrasena: ''
     });
     const [error, setError] = useState('');
+    const [isSubmitting, setSubmitting] = useState(false);
 
     async function submit(event) {
         event.preventDefault();
         setError('');
+        setSubmitting(true);
 
         try {
             // 1. FLUJO DE LOGIN
@@ -69,6 +71,9 @@ function AuthPanel({
                 if (form.nuevaContrasena.length < 8) {
                     throw new Error("La contraseña debe tener mínimo 8 caracteres.");
                 }
+                if (!/[A-Za-z]/.test(form.nuevaContrasena) || !/\d/.test(form.nuevaContrasena)) {
+                    throw new Error("La contraseña debe incluir letras y números.");
+                }
                 if (!onRestablecerContrasena) throw new Error("Función 'onRestablecerContrasena' no conectada en App.jsx");
 
                 await onRestablecerContrasena(form.correo, form.codigo, form.nuevaContrasena);
@@ -78,16 +83,27 @@ function AuthPanel({
             }
         } catch (err) {
             setError(err.message);
+        } finally {
+            setSubmitting(false);
         }
     }
 
     async function resendVerification() {
         setError('');
+        setSubmitting(true);
         try {
-            await onReenviarVerificacion(form.correo);
+            if (modo === 'forgot_code') {
+                await onSolicitarRecuperacion(form.correo);
+                setForm((actual) => ({ ...actual, codigo: '' }));
+            } else {
+                await onReenviarVerificacion(form.correo);
+                setForm((actual) => ({ ...actual, codigo: '' }));
+            }
             setModo(modo === 'forgot_code' ? 'forgot_code' : 'verificacion');
         } catch (err) {
             setError(err.message);
+        } finally {
+            setSubmitting(false);
         }
     }
 
@@ -370,7 +386,10 @@ function AuthPanel({
 
                         {/* BOTONES DE ACCIÓN PRINCIPALES */}
                         <motion.div layout transition={premiumTransition} className="pt-2 space-y-4">
-                            <button className="w-full flex items-center justify-center gap-2 py-4 bg-primary hover:bg-primary/90 text-white text-lg font-semibold rounded-xl transition-all shadow-glow group">
+                            <button
+                                className="w-full flex items-center justify-center gap-2 py-4 bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-wait text-white text-lg font-semibold rounded-xl transition-all shadow-glow group"
+                                disabled={isSubmitting}
+                            >
                                 {modo === 'login' && 'Entrar a BanduMusic'}
                                 {modo === 'registro' && 'Crear cuenta'}
                                 {modo === 'verificacion' && 'Verificar correo'}
@@ -395,8 +414,9 @@ function AuthPanel({
                                                 className="w-full py-3 bg-transparent hover:bg-surface text-textSub hover:text-white font-medium rounded-xl transition-colors text-base"
                                                 type="button"
                                                 onClick={resendVerification}
+                                                disabled={isSubmitting}
                                             >
-                                                Reenviar código de acceso
+                                                {modo === 'forgot_code' ? 'Reenviar código de recuperación' : 'Reenviar código de verificación'}
                                             </button>
                                         )}
                                         <button

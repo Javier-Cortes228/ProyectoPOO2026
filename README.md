@@ -27,6 +27,7 @@ La arquitectura mantiene el catálogo local como núcleo del proyecto para respe
 ## Funcionalidades
 
 - Registro e inicio de sesión de usuarios.
+- Verificación de correo y recuperación de contraseña mediante código temporal.
 - Catálogo local de canciones y podcasts.
 - Catálogo online Jamendo separado del catálogo local, con paginación y carga incremental.
 - Reproducción de audio local y audio online de Jamendo.
@@ -108,6 +109,7 @@ El catálogo local se carga automáticamente si la base de datos está vacía. E
 ## Actualizacion de autenticacion y Jamendo
 
 - El registro crea la cuenta y genera un codigo temporal de 6 digitos. La cuenta no puede iniciar sesion hasta verificar el codigo.
+- La recuperacion de contraseña genera un codigo temporal independiente, valida intentos y actualiza la contraseña con BCrypt.
 - El login guarda el JWT en una cookie segura `HttpOnly`; el frontend no almacena tokens en `localStorage`.
 - El cierre de sesion llama al backend para limpiar la cookie de autenticacion.
 - `MAIL_ENABLED=false` deja el codigo de verificacion en los logs del backend para desarrollo local. Para envio real se debe configurar SMTP y usar `MAIL_ENABLED=true`.
@@ -124,6 +126,8 @@ AUTH_COOKIE_SECURE=false
 AUTH_COOKIE_SAME_SITE=Lax
 EMAIL_VERIFICATION_EXPIRATION_MINUTES=10
 EMAIL_VERIFICATION_MAX_ATTEMPTS=5
+PASSWORD_RESET_EXPIRATION_MINUTES=10
+PASSWORD_RESET_MAX_ATTEMPTS=5
 EMAIL_VALIDATION_DNS_ENABLED=true
 EMAIL_VALIDATION_BLOCKED_DOMAINS=example.com,example.org,example.net,test.com,nose.com,mailinator.com,tempmail.com,10minutemail.com
 MAIL_ENABLED=false

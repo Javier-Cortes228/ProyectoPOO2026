@@ -86,6 +86,27 @@ export function reenviarVerificacion(correo) {
   });
 }
 
+export function solicitarRecuperacionContrasena(correo) {
+  return request('/api/usuarios/recuperacion/solicitar', {
+    method: 'POST',
+    body: JSON.stringify({ correo })
+  });
+}
+
+export function verificarCodigoRecuperacion(correo, codigo) {
+  return request('/api/usuarios/recuperacion/verificar', {
+    method: 'POST',
+    body: JSON.stringify({ correo, codigo })
+  });
+}
+
+export function restablecerContrasena(correo, codigo, nuevaContrasena) {
+  return request('/api/usuarios/recuperacion/restablecer', {
+    method: 'POST',
+    body: JSON.stringify({ correo, codigo, nuevaContrasena })
+  });
+}
+
 export function cargarCatalogo(titulo = '') {
   return request(`/api/catalogo/buscar?titulo=${encodeURIComponent(titulo)}`);
 }

@@ -22,6 +22,7 @@ public class UsuarioService {
     private final PlayListRepository playListRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerificationService;
+    private final PasswordResetService passwordResetService;
     private final EmailAddressValidator emailAddressValidator;
     private final UserInputValidator userInputValidator;
 
@@ -30,6 +31,7 @@ public class UsuarioService {
             PlayListRepository playListRepository,
             PasswordEncoder passwordEncoder,
             EmailVerificationService emailVerificationService,
+            PasswordResetService passwordResetService,
             EmailAddressValidator emailAddressValidator,
             UserInputValidator userInputValidator
     ) {
@@ -37,6 +39,7 @@ public class UsuarioService {
         this.playListRepository = playListRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailVerificationService = emailVerificationService;
+        this.passwordResetService = passwordResetService;
         this.emailAddressValidator = emailAddressValidator;
         this.userInputValidator = userInputValidator;
     }
@@ -102,6 +105,21 @@ public class UsuarioService {
     @Transactional
     public void verificarCodigoCorreo(String correo, String codigo) {
         emailVerificationService.verificarCodigo(correo, codigo);
+    }
+
+    @Transactional
+    public void solicitarRecuperacionContrasena(String correo) {
+        passwordResetService.solicitarCodigo(correo);
+    }
+
+    @Transactional
+    public void verificarCodigoRecuperacion(String correo, String codigo) {
+        passwordResetService.verificarCodigo(correo, codigo);
+    }
+
+    @Transactional
+    public void restablecerContrasena(String correo, String codigo, String nuevaContrasena) {
+        passwordResetService.restablecerContrasena(correo, codigo, nuevaContrasena);
     }
 
     @Transactional(readOnly = true)
