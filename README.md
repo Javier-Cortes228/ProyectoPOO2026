@@ -1,7 +1,6 @@
 # BanduMusic
 
 <p align="center">
-  <img src="frontend/public/logo-bandumusic.png" alt="Logo" width="350">
   <img src="frontend/public/logo-bandumusic2.png" alt="App" width="500">
 </p>
 
