@@ -97,6 +97,10 @@ El frontend usa Tailwind CSS como sistema principal de estilos. La configuracion
 
 Los componentes nuevos deben usar los tokens `background`, `surface`, `primary`, `secondary`, `textMain` y `textSub` para mantener consistencia visual.
 
+🎨 Paleta de colores BanduMusic
+Color Principal: #3a89ff
+Color Secundario: #22D3EE
+
 ## Demo
 
 Usuarios semilla:

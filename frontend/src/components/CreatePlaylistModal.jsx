@@ -34,7 +34,7 @@ function CreatePlaylistModal({ open, onCancel, onAccept }) {
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Nueva Playlist</h2>
-            <p className="text-sm text-textSub">Crea una colección personalizada</p>
+            <p className="text-sm text-textSub">Crea una playlist personalizada.</p>
           </div>
         </div>
 
@@ -48,7 +48,7 @@ function CreatePlaylistModal({ open, onCancel, onAccept }) {
               setNombre(event.target.value);
               if (error) setError('');
             }}
-            placeholder="Ej. Favoritos del mes..."
+            placeholder="ej: Mi terapia"
           />
           {error && <p className="text-red-400 text-xs mt-2 font-medium">{error}</p>}
         </div>

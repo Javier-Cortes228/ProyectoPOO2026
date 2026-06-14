@@ -7,15 +7,15 @@ module.exports = {
     theme: {
         extend: {
             fontFamily: {
-                orbitron: ['Orbitron', 'sans-serif'],
+                outfit: ['Outfit', 'sans-serif'], // Reemplazamos orbitron por outfit
                 inter: ['Inter', 'sans-serif'],
             },
             colors: {
                 background: '#0F172A',
                 surface: '#1E293B',
                 hover: '#334155',
-                primary: '#3a89ff',
-                secondary: '#3a89ff',
+                primary: '#3a89ff', // Tu azul base
+                secondary: '#22D3EE', // Tu celeste secundario
                 textMain: '#F8FAFC',
                 textSub: '#94A3B8'
             },

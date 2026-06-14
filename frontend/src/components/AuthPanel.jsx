@@ -157,7 +157,7 @@ function AuthPanel({
                         </h1>
 
                         {/* Mensajes de cabecera adaptables dinámicamente según el estado */}
-                        <h2 className="hidden lg:block text-5xl font-orbitron font-bold mb-6">
+                        <h2 className="hidden lg:block text-5xl font-orbitron font-bold mb-4">
                             {modo === 'login' && <><span className="text-primary">Bandu</span><span className="text-[#22D3EE]">Music</span></>}
                             {modo === 'registro' && <>
                                 <span className="text-primary">Crea tu</span><span className="text-[#22D3EE]"> Cuenta</span>
