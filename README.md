@@ -105,6 +105,10 @@ Los componentes nuevos deben usar los tokens `background`, `surface`, `primary`,
 - Color Principal: #3a89ff
 - Color Secundario: #22D3EE
 
+<p align="center">
+  <img src="frontend/public/logo-bandumusic.png" alt="App" width="500">
+</p>
+
 ## Demo
 
 Usuarios semilla:
