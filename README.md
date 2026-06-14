@@ -106,7 +106,7 @@ Los componentes nuevos deben usar los tokens `background`, `surface`, `primary`,
 - Color Secundario: #22D3EE
 
 <p align="center">
-  <img src="frontend/public/logo-bandumusic.png" alt="App" width="500">
+  <img src="frontend/public/logo-bandumusic.png" alt="App" width="300">
 </p>
 
 ## Demo
