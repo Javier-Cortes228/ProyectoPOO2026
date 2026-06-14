@@ -1,8 +1,8 @@
 # BanduMusic
 
 <p align="center">
-  <img src="public/logo-bandumusic.png" alt="Logo" width="350">
-  <img src="public/logo-bandumusic2.png" alt="App" width="500">
+  <img src="frontend/public/logo-bandumusic.png" alt="Logo" width="350">
+  <img src="frontend/public/logo-bandumusic2.png" alt="App" width="500">
 </p>
 
 **Proyecto de Programación Orientada a Objetos (POO) 2026**  
