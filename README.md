@@ -1,5 +1,10 @@
 # BanduMusic
 
+<p align="center">
+  <img src="public/logo-bandumusic.png" alt="Logo" width="350">
+  <img src="public/logo-bandumusic2.png" alt="App" width="500">
+</p>
+
 **Proyecto de Programación Orientada a Objetos (POO) 2026**  
 *Universidad de La Frontera, Temuco, Chile*
 
