@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, KeyRound, ArrowRight, ArrowLeft } from 'lucide-react';
-const premiumTransition = { duration: 0.4, ease: [0.16, 1, 0.3, 1] };
+
+const premiumTransition = { type: 'spring', bounce: 0, duration: 0.5 };
 
 function AuthPanel({
                        onLogin,
@@ -31,39 +32,33 @@ function AuthPanel({
         setSubmitting(true);
 
         try {
-            // 1. FLUJO DE LOGIN
             if (modo === 'login') {
                 await onLogin(form);
                 return;
             }
-            // 2. FLUJO DE REGISTRO
             if (modo === 'registro') {
                 await onRegistro(form);
                 setModo('verificacion');
                 return;
             }
-            // 3. VERIFICACIÓN DE REGISTRO
             if (modo === 'verificacion') {
                 await onVerificarCodigo(form);
                 setModo('login');
                 setForm((actual) => ({ ...actual, codigo: '' }));
                 return;
             }
-            // 4. RECUPERACIÓN - PASO 1: Solicitar código
             if (modo === 'forgot_email') {
                 if (!onSolicitarRecuperacion) throw new Error("Función 'onSolicitarRecuperacion' no conectada en App.jsx");
                 await onSolicitarRecuperacion(form.correo);
                 setModo('forgot_code');
                 return;
             }
-            // 5. RECUPERACIÓN - PASO 2: Verificar código enviado
             if (modo === 'forgot_code') {
                 if (!onVerificarCodigoRecuperacion) throw new Error("Función 'onVerificarCodigoRecuperacion' no conectada en App.jsx");
                 await onVerificarCodigoRecuperacion(form.correo, form.codigo);
                 setModo('forgot_reset');
                 return;
             }
-            // 6. RECUPERACIÓN - PASO 3: Reconfigurar contraseña nueva
             if (modo === 'forgot_reset') {
                 if (form.nuevaContrasena !== form.confirmarContrasena) {
                     throw new Error("Las contraseñas no coinciden.");
@@ -145,7 +140,7 @@ function AuthPanel({
                     className="w-full max-w-lg p-1"
                     onSubmit={submit}
                 >
-                    <motion.div layout transition={premiumTransition} className="text-center mb-16">
+                    <motion.div layout transition={premiumTransition} className="text-center mb-10">
                         {/* Vista Móvil */}
                         <img
                             src="/logo-bandumusic.png"
@@ -156,25 +151,33 @@ function AuthPanel({
                             <span className="text-primary">Bandu</span><span className="text-[#22D3EE]">Music</span>
                         </h1>
 
-                        {/* Mensajes de cabecera adaptables dinámicamente según el estado */}
-                        <h2 className="hidden lg:block text-5xl font-orbitron font-bold mb-4">
-                            {modo === 'login' && <><span className="text-primary">Bandu</span><span className="text-[#22D3EE]">Music</span></>}
-                            {modo === 'registro' && <>
-                                <span className="text-primary">Crea tu</span><span className="text-[#22D3EE]"> Cuenta</span>
-                            </>}
-                            {modo === 'verificacion' && <span className="text-primary">Verificación</span>}
-                            {(modo === 'forgot_email' || modo === 'forgot_code') && <><span className="text-primary">Recuperar</span> <span className="text-[#22D3EE]">Cuenta</span></>}
-                            {modo === 'forgot_reset' && <><span className="text-primary">Nueva</span> <span className="text-[#22D3EE]">Clave</span></>}
-                        </h2>
+                        {/* === TÍTULOS CON ANIMACIÓN DE CROSSFADE PERFECTA === */}
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={modo}
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -5 }}
+                                transition={{ duration: 0.2, ease: "easeOut" }}
+                            >
+                                <h2 className="hidden lg:block text-5xl font-orbitron font-bold mb-4">
+                                    {modo === 'login' && <><span className="text-primary">Bandu</span><span className="text-[#22D3EE]">Music</span></>}
+                                    {modo === 'registro' && <><span className="text-primary">Crea tu</span><span className="text-[#22D3EE]"> Cuenta</span></>}
+                                    {modo === 'verificacion' && <span className="text-primary">Verificación</span>}
+                                    {(modo === 'forgot_email' || modo === 'forgot_code') && <><span className="text-primary">Recuperar</span> <span className="text-[#22D3EE]">Cuenta</span></>}
+                                    {modo === 'forgot_reset' && <><span className="text-primary">Nueva</span> <span className="text-[#22D3EE]">Clave</span></>}
+                                </h2>
 
-                        <p className="text-textSub text-base">
-                            {modo === 'login' && 'Ingresa a tu cuenta para continuar'}
-                            {modo === 'registro' && 'Únete para empezar a escuchar música sin límites'}
-                            {modo === 'verificacion' && 'Ingresa el código que enviamos a tu correo'}
-                            {modo === 'forgot_email' && 'Escribe tu correo para enviarte un código de restauración'}
-                            {modo === 'forgot_code' && 'Ingresa el código de seguridad enviado'}
-                            {modo === 'forgot_reset' && 'Configura las credenciales de acceso de tu nueva contraseña'}
-                        </p>
+                                <p className="text-textSub text-base">
+                                    {modo === 'login' && 'Ingresa a tu cuenta para continuar'}
+                                    {modo === 'registro' && 'Únete para empezar a escuchar música sin límites'}
+                                    {modo === 'verificacion' && 'Ingresa el código que enviamos a tu correo'}
+                                    {modo === 'forgot_email' && 'Escribe tu correo para enviarte un código de restauración'}
+                                    {modo === 'forgot_code' && 'Ingresa el código de seguridad enviado'}
+                                    {modo === 'forgot_reset' && 'Configura las credenciales de acceso de tu nueva contraseña'}
+                                </p>
+                            </motion.div>
+                        </AnimatePresence>
                     </motion.div>
 
                     {/* === NAVEGACIÓN PRINCIPAL (TABS) === */}
@@ -182,11 +185,11 @@ function AuthPanel({
                         {modo !== 'verificacion' && !esFlujoRecuperacion && (
                             <motion.div
                                 layout
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
+                                initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                animate={{ opacity: 1, height: 'auto', marginBottom: 32 }}
+                                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                                 transition={premiumTransition}
-                                className="flex border-b border-white/10 mb-8"
+                                className="flex border-b border-white/10 overflow-hidden"
                             >
                                 {['login', 'registro'].map((tab) => (
                                     <button
@@ -209,23 +212,24 @@ function AuthPanel({
                     </AnimatePresence>
 
                     {/* === CAMPOS DE TEXTO DINÁMICOS === */}
-                    <motion.div layout transition={premiumTransition} className="flex flex-col gap-6">
+                    <motion.div layout transition={premiumTransition} className="flex flex-col">
                         <AnimatePresence initial={false}>
                             {modo === 'registro' && (
                                 <motion.div
+                                    layout
                                     key="campo-nombre"
-                                    initial={{ opacity: 0, height: 0, y: -10, scale: 0.98 }}
-                                    animate={{ opacity: 1, height: 'auto', y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, height: 0, y: -10, scale: 0.98 }}
+                                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                    animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+                                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                                     transition={premiumTransition}
-                                    className="overflow-hidden"
+                                    className="overflow-hidden px-2 -mx-2"
                                 >
-                                    <div className="p-1 -m-1">
+                                    <div className="pt-1">
                                         <label className="block text-sm font-medium text-textSub mb-2">Nombre de usuario</label>
                                         <div className="relative">
                                             <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-textSub" />
                                             <input
-                                                className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-all placeholder:text-textSub/50"
+                                                className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-colors duration-300 ease-in-out placeholder:text-textSub/50"
                                                 value={form.nombreUsuario}
                                                 onChange={(event) => update('nombreUsuario', event.target.value)}
                                                 placeholder="ej: Juanito123"
@@ -236,18 +240,25 @@ function AuthPanel({
                             )}
                         </AnimatePresence>
 
-                        {/* CAMPO: CORREO ELECTRÓNICO (Login, Registro, Recuperación pasos 1 y 2) */}
-                        <AnimatePresence>
+                        <AnimatePresence initial={false}>
                             {modo !== 'forgot_reset' && (
-                                <motion.div layout transition={premiumTransition} key="campo-correo">
-                                    <div className="p-1 -m-1">
+                                <motion.div
+                                    layout
+                                    key="campo-correo"
+                                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                    animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+                                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                    transition={premiumTransition}
+                                    className="overflow-hidden px-2 -mx-2"
+                                >
+                                    <div className="pt-1">
                                         <label className="block text-sm font-medium text-textSub mb-2">Correo electrónico</label>
                                         <div className="relative">
                                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-textSub" />
                                             <input
                                                 type="email"
                                                 disabled={modo === 'verificacion' || modo === 'forgot_code'}
-                                                className={`w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-all placeholder:text-textSub/50 ${(modo === 'verificacion' || modo === 'forgot_code') ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                className={`w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-colors duration-300 ease-in-out placeholder:text-textSub/50 ${(modo === 'verificacion' || modo === 'forgot_code') ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                 value={form.correo}
                                                 onChange={(event) => update('correo', event.target.value)}
                                                 placeholder="tu@correo.com"
@@ -262,20 +273,21 @@ function AuthPanel({
                         <AnimatePresence initial={false}>
                             {(modo === 'login' || modo === 'registro') && (
                                 <motion.div
+                                    layout
                                     key="campo-contrasena"
-                                    initial={{ opacity: 0, height: 0, y: -10, scale: 0.98 }}
-                                    animate={{ opacity: 1, height: 'auto', y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, height: 0, y: -10, scale: 0.98 }}
+                                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                    animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+                                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                                     transition={premiumTransition}
-                                    className="overflow-hidden"
+                                    className="overflow-hidden px-2 -mx-2"
                                 >
-                                    <div className="p-1 -m-1">
+                                    <div className="pt-1">
                                         <label className="block text-sm font-medium text-textSub mb-2 mt-1">Contraseña</label>
                                         <div className="relative">
                                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-textSub" />
                                             <input
                                                 type="password"
-                                                className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-all placeholder:text-textSub/50"
+                                                className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-colors duration-300 ease-in-out placeholder:text-textSub/50"
                                                 value={form.contrasena}
                                                 onChange={(event) => update('contrasena', event.target.value)}
                                                 placeholder={modo === 'registro' ? 'Mínimo 8 caracteres' : '••••••••'}
@@ -297,25 +309,26 @@ function AuthPanel({
                             )}
                         </AnimatePresence>
 
-                        {/* CAMPO: CÓDIGO DE SEGURIDAD (Verificación del Registro O Verificación de Clave Olvidada) */}
+                        {/* CAMPO: CÓDIGO DE SEGURIDAD */}
                         <AnimatePresence initial={false}>
                             {(modo === 'verificacion' || modo === 'forgot_code') && (
                                 <motion.div
+                                    layout
                                     key="campo-codigo"
-                                    initial={{ opacity: 0, height: 0, y: -10, scale: 0.98 }}
-                                    animate={{ opacity: 1, height: 'auto', y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, height: 0, y: -10, scale: 0.98 }}
+                                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                    animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+                                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                                     transition={premiumTransition}
-                                    className="overflow-hidden"
+                                    className="overflow-hidden px-2 -mx-2"
                                 >
-                                    <div className="p-1 -m-1">
+                                    <div className="pt-1">
                                         <label className="block text-sm font-medium text-textSub mb-2 mt-1">Código de seguridad</label>
                                         <div className="relative">
                                             <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-textSub" />
                                             <input
                                                 inputMode="numeric"
                                                 maxLength={6}
-                                                className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 tracking-widest text-xl font-medium text-center text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-all placeholder:text-textSub/30"
+                                                className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 tracking-widest text-xl font-medium text-center text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-colors duration-300 ease-in-out placeholder:text-textSub/30"
                                                 value={form.codigo}
                                                 onChange={(event) => update('codigo', event.target.value.replace(/\D/g, '').slice(0, 6))}
                                                 placeholder="000000"
@@ -326,42 +339,45 @@ function AuthPanel({
                             )}
                         </AnimatePresence>
 
-                        {/* CAMPOS NUEVOS: RESTABLECER CONTRASEÑA (Paso final de recuperación) */}
+                        {/* CAMPO: RESTABLECER CONTRASEÑA*/}
                         <AnimatePresence initial={false}>
                             {modo === 'forgot_reset' && (
                                 <motion.div
+                                    layout
                                     key="campos-nuevos-pass"
-                                    initial={{ opacity: 0, height: 0, y: -10, scale: 0.98 }}
-                                    animate={{ opacity: 1, height: 'auto', y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, height: 0, y: -10, scale: 0.98 }}
+                                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                    animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+                                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                                     transition={premiumTransition}
-                                    className="overflow-hidden space-y-6"
+                                    className="overflow-hidden px-2 -mx-2"
                                 >
-                                    <div className="p-1 -m-1">
-                                        <label className="block text-sm font-medium text-textSub mb-2">Nueva contraseña</label>
-                                        <div className="relative">
-                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-textSub" />
-                                            <input
-                                                type="password"
-                                                className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-all placeholder:text-textSub/50"
-                                                value={form.nuevaContrasena}
-                                                onChange={(event) => update('nuevaContrasena', event.target.value)}
-                                                placeholder="Mínimo 8 caracteres"
-                                            />
+                                    <div className="pt-1 space-y-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-textSub mb-2">Nueva contraseña</label>
+                                            <div className="relative">
+                                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-textSub" />
+                                                <input
+                                                    type="password"
+                                                    className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-colors duration-300 ease-in-out placeholder:text-textSub/50"
+                                                    value={form.nuevaContrasena}
+                                                    onChange={(event) => update('nuevaContrasena', event.target.value)}
+                                                    placeholder="Mínimo 8 caracteres"
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="p-1 -m-1">
-                                        <label className="block text-sm font-medium text-textSub mb-2">Repite la contraseña</label>
-                                        <div className="relative">
-                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-textSub" />
-                                            <input
-                                                type="password"
-                                                className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-all placeholder:text-textSub/50"
-                                                value={form.confirmarContrasena}
-                                                onChange={(event) => update('confirmarContrasena', event.target.value)}
-                                                placeholder="Confirma tu contraseña"
-                                            />
+                                        <div>
+                                            <label className="block text-sm font-medium text-textSub mb-2">Repite la contraseña</label>
+                                            <div className="relative">
+                                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-textSub" />
+                                                <input
+                                                    type="password"
+                                                    className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-colors duration-300 ease-in-out placeholder:text-textSub/50"
+                                                    value={form.confirmarContrasena}
+                                                    onChange={(event) => update('confirmarContrasena', event.target.value)}
+                                                    placeholder="Confirma tu contraseña"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -373,19 +389,22 @@ function AuthPanel({
                             {(error || mensaje) && (
                                 <motion.div
                                     layout
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    key="alerta"
+                                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                    animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+                                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                                     transition={premiumTransition}
-                                    className={`p-4 rounded-xl text-sm border flex items-center gap-2 font-medium ${error ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20'}`}
+                                    className="overflow-hidden"
                                 >
-                                    {error || mensaje}
+                                    <div className={`p-4 rounded-xl text-sm border flex items-center gap-2 font-medium ${error ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20'}`}>
+                                        {error || mensaje}
+                                    </div>
                                 </motion.div>
                             )}
                         </AnimatePresence>
 
                         {/* BOTONES DE ACCIÓN PRINCIPALES */}
-                        <motion.div layout transition={premiumTransition} className="pt-2 space-y-4">
+                        <motion.div layout transition={premiumTransition} className="pt-2">
                             <button
                                 className="w-full flex items-center justify-center gap-2 py-4 bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-wait text-white text-lg font-semibold rounded-xl transition-all shadow-glow group"
                                 disabled={isSubmitting}
@@ -403,33 +422,36 @@ function AuthPanel({
                             <AnimatePresence>
                                 {(modo === 'verificacion' || esFlujoRecuperacion) && (
                                     <motion.div
+                                        layout
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
                                         exit={{ opacity: 0, height: 0 }}
                                         transition={premiumTransition}
-                                        className="flex flex-col gap-3 overflow-hidden w-full"
+                                        className="overflow-hidden w-full"
                                     >
-                                        {(modo === 'verificacion' || modo === 'forgot_code') && (
+                                        <div className="flex flex-col gap-3 mt-4">
+                                            {(modo === 'verificacion' || modo === 'forgot_code') && (
+                                                <button
+                                                    className="w-full py-3 bg-transparent hover:bg-surface text-textSub hover:text-white font-medium rounded-xl transition-colors text-base"
+                                                    type="button"
+                                                    onClick={resendVerification}
+                                                    disabled={isSubmitting}
+                                                >
+                                                    {modo === 'forgot_code' ? 'Reenviar código de recuperación' : 'Reenviar código de verificación'}
+                                                </button>
+                                            )}
                                             <button
-                                                className="w-full py-3 bg-transparent hover:bg-surface text-textSub hover:text-white font-medium rounded-xl transition-colors text-base"
+                                                className="w-full py-2 flex items-center justify-center gap-2 bg-transparent text-textSub hover:text-[#22D3EE] font-medium rounded-xl transition-colors text-sm group"
                                                 type="button"
-                                                onClick={resendVerification}
-                                                disabled={isSubmitting}
+                                                onClick={() => {
+                                                    setModo('login');
+                                                    setError('');
+                                                }}
                                             >
-                                                {modo === 'forgot_code' ? 'Reenviar código de recuperación' : 'Reenviar código de verificación'}
+                                                <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                                                Volver al inicio de sesión
                                             </button>
-                                        )}
-                                        <button
-                                            className="w-full py-2 flex items-center justify-center gap-2 bg-transparent text-textSub hover:text-[#22D3EE] font-medium rounded-xl transition-colors text-sm group"
-                                            type="button"
-                                            onClick={() => {
-                                                setModo('login');
-                                                setError('');
-                                            }}
-                                        >
-                                            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                                            Volver al inicio de sesión
-                                        </button>
+                                        </div>
                                     </motion.div>
                                 )}
                             </AnimatePresence>

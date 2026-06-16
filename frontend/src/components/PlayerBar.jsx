@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExternalLink, Music, Pause, Play, SkipBack, SkipForward, Volume1, Volume2, VolumeX } from 'lucide-react';
+import { ExternalLink, Music, Pause, Play, SkipBack, SkipForward, Volume1, Volume2, VolumeX, Plus, X, Search, Check, Heart } from 'lucide-react';
 
-function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal }) {
+function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal, playlists, favoritosIds, onToggleFavorito, onTogglePlaylist, onCreatePlaylist }) {
     const audioRef = useRef(null);
     const current = pista || jamendoTrack;
     const currentIndex = current ? queue.findIndex((item) => item.id === current.id) : -1;
@@ -12,14 +12,40 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal }) {
     const [volume, setVolume] = useState(0.85);
     const [isMuted, setMuted] = useState(false);
 
-    // Estados para el tooltip interactivo
-    const [hoverProgress, setHoverProgress] = useState(null);
-    const [showTooltip, setShowTooltip] = useState(false);
-    const progressContainerRef = useRef(null);
+    const [showPopover, setShowPopover] = useState(false);
+    const [busqueda, setBusqueda] = useState('');
+    const [draftFavorito, setDraftFavorito] = useState(false);
+    const [draftPlaylists, setDraftPlaylists] = useState(new Set());
+    const popoverRef = useRef(null);
+
+    const [hoverTime, setHoverTime] = useState(null);
+    const [hoverX, setHoverX] = useState(0);
 
     const audioSrc = pista ? `/audio/${pista.id}.mp3` : jamendoTrack?.audioUrl || '';
     const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
     const effectiveVolume = isMuted ? 0 : volume;
+
+    const isSaved = current ? (favoritosIds.includes(current.id) || playlists.some(p => p.contenidos?.some(c => c.id === current.id))) : false;
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (popoverRef.current && !popoverRef.current.contains(event.target)) {
+                setShowPopover(false);
+            }
+        }
+        if (showPopover) document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [showPopover]);
+
+    useEffect(() => {
+        if (showPopover && current) {
+            setDraftFavorito(favoritosIds.includes(current.id));
+            setDraftPlaylists(new Set(
+                playlists.filter(p => p.contenidos?.some(c => c.id === current.id)).map(p => p.id)
+            ));
+            setBusqueda('');
+        }
+    }, [showPopover, current, playlists, favoritosIds]);
 
     useEffect(() => {
         const audio = audioRef.current;
@@ -31,6 +57,7 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal }) {
         setCurrentTime(0);
         setDuration(0);
         setPlaying(Boolean(current));
+        setShowPopover(false);
     }, [current?.id]);
 
     function previous() { if (currentIndex > 0) onPlayLocal(queue[currentIndex - 1]); }
@@ -64,35 +91,54 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal }) {
 
     function toggleMute() { setMuted((actual) => !actual); }
 
-    // Cálculo matemático del seguimiento del mouse para el Tooltip
-    function handleMouseMove(e) {
-        if (!progressContainerRef.current) return;
-        const rect = progressContainerRef.current.getBoundingClientRect();
-        let x = e.clientX - rect.left;
-        x = Math.max(0, Math.min(x, rect.width));
-        setHoverProgress(x / rect.width);
-    }
+    const handleSavePopover = () => {
+        const isCurrentlyFavorito = favoritosIds.includes(current.id);
+        if (draftFavorito !== isCurrentlyFavorito) onToggleFavorito(current);
+
+        playlists.forEach(p => {
+            const wasInPlaylist = p.contenidos?.some(c => c.id === current.id);
+            const isNowInDraft = draftPlaylists.has(p.id);
+            if (wasInPlaylist !== isNowInDraft) {
+                onTogglePlaylist(p.id, current, wasInPlaylist);
+            }
+        });
+        setShowPopover(false);
+    };
+
+    const handleProgressHover = (e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const percentage = Math.max(0, Math.min(1, x / rect.width));
+        setHoverX(x);
+        setHoverTime(percentage * duration);
+    };
+
+    const handleProgressLeave = () => {
+        setHoverTime(null);
+    };
 
     const VolumeIcon = isMuted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
     if (!current) {
         return (
-            <footer className="h-28 shrink-0 glass border-t border-white/5 px-6 flex items-center justify-between z-50">
+            <footer className="h-28 shrink-0 glass border-t border-white/5 px-6 flex items-center justify-between z-50 relative">
                 <div className="flex items-center gap-4 opacity-50">
                     <div className="w-14 h-14 rounded-lg bg-surface flex items-center justify-center">
                         <Music size={24} className="text-textSub" />
                     </div>
                     <div>
                         <strong className="block text-white text-sm font-medium">Selecciona contenido</strong>
-                        <small className="text-textSub text-xs">BanduMusic o Jamendo</small>
+                        <small className="text-textSub text-xs">BanduMusic Hub o Jamendo</small>
                     </div>
                 </div>
             </footer>
         );
     }
 
+    const playlistsFiltradas = busqueda ? playlists.filter(p => p.nombre.toLowerCase().includes(busqueda.toLowerCase())) : playlists;
+
     return (
-        <footer className="h-28 shrink-0 glass border-t border-white/10 px-5 md:px-6 grid grid-cols-1 md:grid-cols-[minmax(180px,1fr)_minmax(320px,1.4fr)_minmax(180px,1fr)] items-center gap-4 z-50 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.5)]">
+        <footer className="h-28 shrink-0 glass border-t border-white/10 px-5 md:px-6 grid grid-cols-1 md:grid-cols-[minmax(180px,1.2fr)_minmax(320px,1.4fr)_minmax(180px,1.2fr)] items-center gap-4 z-50 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.5)] relative">
             <audio
                 ref={audioRef}
                 key={audioSrc}
@@ -106,7 +152,7 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal }) {
                 onEnded={next}
             />
 
-            <div className="flex items-center gap-4 min-w-0">
+            <div className="flex items-center gap-4 min-w-0 pr-4">
                 <div className="relative w-14 h-14 rounded-lg bg-surface flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/10">
                     {jamendoTrack?.imagenUrl ? (
                         <img src={jamendoTrack.imagenUrl} alt="" className="w-full h-full object-cover" />
@@ -114,14 +160,112 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal }) {
                         <Music size={24} className="text-primary" />
                     )}
                 </div>
-                <div className="overflow-hidden">
-                    <strong className="block text-white text-sm font-semibold truncate">{current.titulo}</strong>
-                    <small className="block text-textSub text-xs truncate mt-0.5">{current.artista || current.anfitrion || 'Sin autor'}</small>
-                    {jamendoTrack && (
-                        <a href={jamendoTrack.jamendoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] text-[#22D3EE] hover:text-white transition-colors mt-1">
-                            Ver en Jamendo <ExternalLink size={11} />
-                        </a>
-                    )}
+
+                <div className="flex items-center justify-between min-w-0 flex-1">
+                    <div className="overflow-hidden min-w-0 pr-4">
+                        <strong className="block text-white text-sm font-semibold truncate">{current.titulo}</strong>
+                        <small className="block text-textSub text-xs truncate mt-0.5">{current.artista || current.anfitrion || 'Sin autor'}</small>
+                        {jamendoTrack && (
+                            <a href={jamendoTrack.jamendoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] text-[#22D3EE] hover:text-white transition-colors mt-1">
+                                Ver en Jamendo <ExternalLink size={11} />
+                            </a>
+                        )}
+                    </div>
+
+                    <div className="relative shrink-0 flex items-center ml-auto" ref={popoverRef}>
+                        <button
+                            className={`w-7 h-7 flex items-center justify-center rounded-full border-2 transition-all shadow-[0_0_10px_rgba(34,211,238,0.2)] ${isSaved ? 'bg-[#22D3EE] border-[#22D3EE] text-background hover:bg-[#22D3EE]/90' : 'border-[#22D3EE] text-[#22D3EE] hover:bg-[#22D3EE] hover:text-background'}`}
+                            onClick={() => setShowPopover(!showPopover)}
+                            title="Agregar a playlist"
+                        >
+                            <AnimatePresence mode="wait">
+                                {isSaved ? (
+                                    <motion.div key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ duration: 0.15 }}>
+                                        <Check size={14} strokeWidth={2.5} />
+                                    </motion.div>
+                                ) : (
+                                    <motion.div key="plus" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ duration: 0.15 }}>
+                                        <Plus size={14} strokeWidth={2.5} />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </button>
+
+                        <AnimatePresence>
+                            {showPopover && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    transition={{ duration: 0.2, ease: "easeOut" }}
+                                    className="absolute bottom-[calc(100%+16px)] left-0 w-72 bg-surface/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] z-[100] flex flex-col overflow-hidden"
+                                >
+                                    <div className="p-4 border-b border-white/5 flex items-center justify-between">
+                                        <h3 className="text-sm font-bold text-white">Agregar a playlist</h3>
+                                        <button onClick={() => setShowPopover(false)} className="text-textSub hover:text-white transition-colors"><X size={16}/></button>
+                                    </div>
+                                    <div className="p-3">
+                                        <div className="relative mb-2">
+                                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-textSub w-4 h-4" />
+                                            <input
+                                                className="w-full bg-background/50 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-[#22D3EE] transition-colors"
+                                                placeholder="Busca una playlist..."
+                                                value={busqueda}
+                                                onChange={e => setBusqueda(e.target.value)}
+                                            />
+                                        </div>
+                                        <button
+                                            className="flex items-center gap-2 w-full p-2 text-xs text-white hover:text-[#22D3EE] font-medium transition-colors group rounded-lg hover:bg-white/5"
+                                            onClick={() => {
+                                                const nombre = prompt('Nombre de la nueva playlist:');
+                                                if (nombre) { onCreatePlaylist(nombre, current); setShowPopover(false); }
+                                            }}
+                                        >
+                                            <Plus size={16} /> Nueva playlist
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto px-2 pb-2 max-h-48 space-y-0.5">
+                                        <button
+                                            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors text-left"
+                                            onClick={() => setDraftFavorito(!draftFavorito)}
+                                        >
+                                            <div className="w-8 h-8 bg-gradient-to-br from-primary to-[#22D3EE] rounded-md flex items-center justify-center shrink-0 shadow-glow">
+                                                <Heart size={14} className="text-white fill-current" />
+                                            </div>
+                                            <span className="flex-1 text-xs font-semibold text-white truncate">Tus Favoritos</span>
+                                            {draftFavorito && <Check size={16} className="text-[#22D3EE] shrink-0" />}
+                                        </button>
+                                        <div className="my-1 border-b border-white/5" />
+                                        {playlistsFiltradas.map(playlist => {
+                                            const isSelected = draftPlaylists.has(playlist.id);
+                                            return (
+                                                <button
+                                                    key={playlist.id}
+                                                    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors text-left group"
+                                                    onClick={() => setDraftPlaylists(prev => {
+                                                        const next = new Set(prev);
+                                                        if(next.has(playlist.id)) next.delete(playlist.id);
+                                                        else next.add(playlist.id);
+                                                        return next;
+                                                    })}
+                                                >
+                                                    <div className="w-8 h-8 bg-surface rounded-md flex items-center justify-center shrink-0 border border-white/5">
+                                                        <Music size={14} className="text-textSub group-hover:text-white" />
+                                                    </div>
+                                                    <span className="flex-1 text-xs text-textSub group-hover:text-white truncate transition-colors">{playlist.nombre}</span>
+                                                    {isSelected && <Check size={16} className="text-[#22D3EE] shrink-0" />}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="p-3 border-t border-white/5 bg-background/50 flex justify-end gap-2">
+                                        <button className="px-4 py-1.5 rounded-lg text-xs font-medium text-textSub hover:text-white transition-colors" onClick={() => setShowPopover(false)}>Cancelar</button>
+                                        <button className="px-5 py-1.5 rounded-lg text-xs font-bold bg-[#22D3EE] text-background hover:bg-[#22D3EE]/90 transition-colors shadow-glow" onClick={handleSavePopover}>Listo</button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
             </div>
 
@@ -141,16 +285,13 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal }) {
                     </button>
                 </div>
 
-                {/* BARRA DE PROGRESO INTERACTIVA */}
-                <div className="w-full flex items-center gap-3">
-                    <span className="text-[11px] tabular-nums text-primary w-10 text-right">{formatTime(currentTime)}</span>
+                <div className="w-full flex items-center gap-3 group">
+                    <span className="text-[11px] tabular-nums text-textSub w-10 text-right">{formatTime(currentTime)}</span>
 
                     <div
-                        className="relative flex-1 h-4 flex items-center group cursor-pointer"
-                        ref={progressContainerRef}
-                        onMouseEnter={() => setShowTooltip(true)}
-                        onMouseLeave={() => setShowTooltip(false)}
-                        onMouseMove={handleMouseMove}
+                        className="relative flex-1 h-4 flex items-center cursor-pointer"
+                        onMouseMove={handleProgressHover}
+                        onMouseLeave={handleProgressLeave}
                     >
                         <input
                             type="range"
@@ -159,34 +300,30 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal }) {
                             step="0.1"
                             value={Math.min(currentTime, duration || currentTime)}
                             onChange={seek}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20 peer"
                         />
-
-                        {/* Base (Neutro) */}
-                        <div className="absolute left-0 right-0 h-1 bg-white/20 rounded-full transition-all group-hover:h-1.5" />
-
-                        {/* Progreso Activo (Blanco por defecto, se vuelve primary al pasar el puntero) */}
-                        <div className="absolute left-0 h-1 bg-white rounded-full pointer-events-none transition-all group-hover:bg-primary group-hover:h-1.5 flex items-center justify-end" style={{ width: `${progress}%` }}>
-                            <div className="w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 translate-x-1.5" />
+                        <div className="absolute left-0 right-0 h-1 bg-white/20 rounded-full transition-all peer-hover:h-1.5" />
+                        <div className="absolute left-0 h-1 bg-white rounded-full pointer-events-none transition-all peer-hover:bg-primary peer-hover:h-1.5 flex items-center justify-end" style={{ width: `${progress}%` }}>
+                            <div className="w-3 h-3 bg-white rounded-full shadow-md opacity-0 peer-hover:opacity-100 group-hover:opacity-100 translate-x-1.5" />
                         </div>
 
-                        {/* Tooltip con los segundos exactos */}
                         <AnimatePresence>
-                            {showTooltip && hoverProgress !== null && (
+                            {hoverTime !== null && (
                                 <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
+                                    initial={{ opacity: 0, y: 5 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0 }}
-                                    className="absolute top-[-30px] -translate-x-1/2 bg-surface border border-white/10 px-2 py-1 rounded shadow-lg text-[10px] text-white font-medium pointer-events-none z-50 whitespace-nowrap"
-                                    style={{ left: `${hoverProgress * 100}%` }}
+                                    exit={{ opacity: 0, y: 5 }}
+                                    transition={{ duration: 0.15 }}
+                                    className="absolute bottom-6 -translate-x-1/2 bg-surface border border-white/10 text-white text-[11px] font-bold px-2 py-1 rounded-md shadow-lg pointer-events-none z-50 whitespace-nowrap"
+                                    style={{ left: `${hoverX}px` }}
                                 >
-                                    {formatTime(hoverProgress * (duration || 0))}
+                                    {formatTime(hoverTime)}
                                 </motion.div>
                             )}
                         </AnimatePresence>
-
                     </div>
-                    <span className="text-[11px] tabular-nums text-primary w-10">{formatTime(duration || current.duracionSegundos || 0)}</span>
+
+                    <span className="text-[11px] tabular-nums text-textSub w-10">{formatTime(duration || current.duracionSegundos || 0)}</span>
                 </div>
             </div>
 
@@ -194,9 +331,7 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal }) {
                 <button onClick={toggleMute} className="text-textSub hover:text-white transition-colors" aria-label={isMuted ? 'Activar sonido' : 'Silenciar'}>
                     <VolumeIcon size={20} />
                 </button>
-
-                {/* BARRA DE VOLUMEN INTERACTIVA */}
-                <div className="relative w-28 h-4 flex items-center hover-container">
+                <div className="relative w-28 h-4 flex items-center">
                     <input
                         type="range"
                         min="0"
@@ -204,10 +339,10 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal }) {
                         step="0.01"
                         value={effectiveVolume}
                         onChange={changeVolume}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 peer"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20 peer"
                     />
-                    <div className="absolute left-0 right-0 h-1 bg-white/20 rounded-full peer-hover:h-1.5 transition-all" />
-                    <div className="absolute left-0 h-1 bg-white pointer-events-none peer-hover:h-1.5 peer-hover:bg-primary transition-all flex items-center justify-end" style={{ width: `${effectiveVolume * 100}%` }}>
+                    <div className="absolute left-0 right-0 h-1 bg-white/20 rounded-full transition-all peer-hover:h-1.5" />
+                    <div className="absolute left-0 h-1 bg-white rounded-full pointer-events-none transition-all peer-hover:bg-primary peer-hover:h-1.5 flex items-center justify-end" style={{ width: `${effectiveVolume * 100}%` }}>
                         <div className="w-3 h-3 bg-white rounded-full shadow-md opacity-0 peer-hover:opacity-100 translate-x-1.5" />
                     </div>
                 </div>

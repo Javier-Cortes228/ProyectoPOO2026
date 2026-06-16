@@ -43,6 +43,11 @@ public class RecommendationService {
     public List<ContenidoAudioResponse> recomendarPara(String correo, int limit) {
         int limiteSeguro = Math.max(1, Math.min(limit <= 0 ? DEFAULT_LIMIT : limit, 30));
         List<PlaybackHistoryItem> historial = playbackHistoryService.obtenerRecientes(correo, HISTORY_LIMIT);
+
+        if (historial.isEmpty()) {
+            return new ArrayList<>();
+        }
+
         List<ContenidoAudio> catalogo = contenidoAudioRepository.findAll();
 
         Set<String> idsEscuchados = historial.stream()
@@ -69,14 +74,6 @@ public class RecommendationService {
                 .map(ContenidoAudioResponse::from)
                 .toList();
 
-        if (locales.isEmpty()) {
-            locales = catalogo.stream()
-                    .filter(audio -> !idsEscuchados.contains(audio.getId()))
-                    .limit(limiteSeguro)
-                    .map(ContenidoAudioResponse::from)
-                    .toList();
-        }
-
         List<ContenidoAudioResponse> online = recomendarJamendo(creadores, generos, idsEscuchados, limiteSeguro);
         return mezclar(locales, online, limiteSeguro);
     }
@@ -96,8 +93,7 @@ public class RecommendationService {
         consultas.addAll(creadores.stream().limit(2).toList());
 
         if (consultas.isEmpty()) {
-            consultas.add("rock");
-            consultas.add("electronic");
+            return new ArrayList<>();
         }
 
         LinkedHashSet<String> idsAgregados = new LinkedHashSet<>();

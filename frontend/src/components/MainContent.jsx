@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, LogOut, Bell, Music, Heart, X } from 'lucide-react';
+import { Search, LogOut, Music, Heart, X, Trash2, RefreshCw } from 'lucide-react';
 import JamendoSection from './JamendoSection.jsx';
 import PlaylistView from './PlaylistView.jsx';
 import TrackCard from './TrackCard.jsx';
+import Modal from './Modal.jsx';
 
 function MainContent({
                          usuario,
@@ -32,10 +33,15 @@ function MainContent({
                          onBuscarJamendo,
                          playlists,
                          onAddJamendoToPlaylist,
-                         onLogout
+                         onLogout,
+                         onVaciarHistorial,
+                         onResetRecomendaciones,
+                         onOpenAddToPlaylist
                      }) {
     const [busqueda, setBusqueda] = useState('');
     const [catalogoActivo, setCatalogoActivo] = useState('local');
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showRecConfirmModal, setShowRecConfirmModal] = useState(false);
     const ultimaBusquedaGlobal = useRef('');
     const filtroGlobal = busqueda.trim().toLowerCase();
 
@@ -71,29 +77,72 @@ function MainContent({
     if (activeView.type === 'playlist' && activePlaylist) {
         content = <PlaylistView playlist={activePlaylist} favoriteSet={favoriteSet} pistaActual={pistaActual} onPlay={onPlayLocal} onAddMusic={onAddMusic} onRemove={onRemoveFromPlaylist} onDeletePlaylist={onDeletePlaylist} onToggleFavorito={onToggleFavorito} />;
     } else if (activeView.type === 'favorites') {
-        content = <LibrarySection title="Tus favoritos" subtitle="Contenido marcado como favorito" items={favoritos.filter((item) => coincideConFiltro(item, filtroGlobal))} favoriteSet={favoriteSet} pistaActual={pistaActual} onPlay={onPlayLocal} onToggleFavorito={onToggleFavorito} />;
+        content = <LibrarySection title="Tus favoritos" subtitle="Contenido marcado como favorito" items={favoritos.filter((item) => coincideConFiltro(item, filtroGlobal))} favoriteSet={favoriteSet} playlists={playlists} pistaActual={pistaActual} onPlay={onPlayLocal} onToggleFavorito={onToggleFavorito} onOpenAddToPlaylist={onOpenAddToPlaylist} />;
     } else if (activeView.type === 'history') {
-        content = <LibrarySection title="Historial reciente" subtitle="Tú historial de reproducción" items={(historial || []).filter((item) => coincideConFiltro(item, filtroGlobal))} favoriteSet={favoriteSet} pistaActual={pistaActual} jamendoActual={jamendoActual} onPlay={onPlayLocal} onToggleFavorito={onToggleFavorito} emptyMessage="Aún no hay reproducciones registradas." />;
+        content = <LibrarySection
+            title="Historial reciente"
+            subtitle="Tú historial de reproducción"
+            items={(historial || []).filter((item) => coincideConFiltro(item, filtroGlobal))}
+            favoriteSet={favoriteSet}
+            playlists={playlists}
+            pistaActual={pistaActual}
+            jamendoActual={jamendoActual}
+            onPlay={onPlayLocal}
+            onToggleFavorito={onToggleFavorito}
+            onOpenAddToPlaylist={onOpenAddToPlaylist}
+            emptyMessage="Aún no hay reproducciones registradas."
+            actionButton={
+                historial.length > 0 && (
+                    <button
+                        onClick={() => setShowConfirmModal(true)}
+                        className="text-sm font-semibold text-[#22D3EE] hover:text-white bg-surface hover:bg-white/5 border border-white/10 px-5 py-2.5 rounded-full transition-colors flex items-center gap-2 shadow-soft"
+                    >
+                        <Trash2 size={16} /> Vaciar historial
+                    </button>
+                )
+            }
+        />;
     } else if (activeView.type === 'recommendations') {
-        content = <LibrarySection title="Recomendaciones para ti" subtitle="Contenido local y online sugerido para ti" items={(recomendaciones || []).filter((item) => coincideConFiltro(item, filtroGlobal))} favoriteSet={favoriteSet} pistaActual={pistaActual} jamendoActual={jamendoActual} onPlay={onPlayLocal} onToggleFavorito={onToggleFavorito} emptyMessage="Reproduce canciones para generar recomendaciones." />;
+        content = <LibrarySection
+            title="Recomendaciones para ti"
+            subtitle="Contenido personalizado sugerido para tí"
+            items={(recomendaciones || []).filter((item) => coincideConFiltro(item, filtroGlobal))}
+            favoriteSet={favoriteSet}
+            playlists={playlists}
+            pistaActual={pistaActual}
+            jamendoActual={jamendoActual}
+            onPlay={onPlayLocal}
+            onToggleFavorito={onToggleFavorito}
+            onOpenAddToPlaylist={onOpenAddToPlaylist}
+            emptyMessage="Reproduce canciones para generar recomendaciones personalizadas."
+            actionButton={
+                recomendaciones?.length > 0 && (
+                    <button
+                        onClick={() => setShowRecConfirmModal(true)}
+                        className="text-sm font-semibold text-[#22D3EE] hover:text-white bg-surface hover:bg-white/5 border border-white/10 px-5 py-2.5 rounded-full transition-colors flex items-center gap-2 shadow-soft"
+                    >
+                        <RefreshCw size={16} /> Resetear sugerencias
+                    </button>
+                )
+            }
+        />;
     } else {
         content = (
             <div className="space-y-8">
-                {/* ENCABEZADO DINÁMICO MEJORADO */}
                 <DynamicHeader usuario={usuario} playlistsCount={playlists.length} favoritos={favoritos.length} />
 
                 {filtroGlobal ? (
                     <div className="space-y-10">
-                        <LibrarySection title="Descubre en BanduMusic" subtitle="Encuentra tu próxima canción favorita." items={catalogoFiltrado} favoriteSet={favoriteSet} pistaActual={pistaActual} onPlay={onPlayLocal} onToggleFavorito={onToggleFavorito} emptyMessage="No hay coincidencias en el catálogo local." />
-                        <LibrarySection title="Resultados online Jamendo" subtitle="Coincidencias externas para tu búsqueda" items={jamendoFiltrado} favoriteSet={favoriteSet} pistaActual={pistaActual} jamendoActual={jamendoActual} onPlay={onPlayLocal} onToggleFavorito={onToggleFavorito} emptyMessage="No hay resultados online para esta búsqueda." />
+                        <LibrarySection title="BanduMusic" subtitle="Encuentra tu próxima canción favorita." items={catalogoFiltrado} favoriteSet={favoriteSet} playlists={playlists} pistaActual={pistaActual} onPlay={onPlayLocal} onToggleFavorito={onToggleFavorito} onOpenAddToPlaylist={onOpenAddToPlaylist} emptyMessage="No hay coincidencias en el catálogo local." />
+                        <LibrarySection title="Jamendo" subtitle="Cátalogo externo." items={jamendoFiltrado} favoriteSet={favoriteSet} playlists={playlists} pistaActual={pistaActual} jamendoActual={jamendoActual} onPlay={onPlayLocal} onToggleFavorito={onToggleFavorito} onOpenAddToPlaylist={onOpenAddToPlaylist} emptyMessage="No hay resultados online para esta búsqueda." />
                     </div>
                 ) : (
                     <>
                         <CatalogSwitch active={catalogoActivo} onChange={setCatalogoActivo} />
                         {catalogoActivo === 'local' ? (
-                            <LibrarySection title="Descubre en BanduMusic" subtitle="Encuentra tu próxima canción favorita." items={catalogoFiltrado} favoriteSet={favoriteSet} pistaActual={pistaActual} onPlay={onPlayLocal} onToggleFavorito={onToggleFavorito} />
+                            <LibrarySection title="Descubre en BanduMusic" subtitle="Encuentra tu próxima canción favorita." items={catalogoFiltrado} favoriteSet={favoriteSet} playlists={playlists} pistaActual={pistaActual} onPlay={onPlayLocal} onToggleFavorito={onToggleFavorito} onOpenAddToPlaylist={onOpenAddToPlaylist} />
                         ) : (
-                            <JamendoSection resultados={jamendoResultados} activeTrackId={jamendoActual?.id} currentQuery={jamendoQuery} hasMore={jamendoHasMore} onBuscar={onBuscarJamendo} onPlay={onPlayJamendo} onPreload={onPreloadJamendo} playlists={playlists} favoriteSet={favoriteSet} onToggleFavorito={onToggleFavorito} onAddToPlaylist={onAddJamendoToPlaylist} onError={onError} />
+                            <JamendoSection resultados={jamendoResultados} activeTrackId={jamendoActual?.id} currentQuery={jamendoQuery} hasMore={jamendoHasMore} onBuscar={onBuscarJamendo} onPlay={onPlayJamendo} onPreload={onPreloadJamendo} playlists={playlists} favoriteSet={favoriteSet} onToggleFavorito={onToggleFavorito} onOpenAddToPlaylist={onOpenAddToPlaylist} onError={onError} />
                         )}
                     </>
                 )}
@@ -122,6 +171,36 @@ function MainContent({
                     {content}
                 </motion.div>
             </div>
+
+            {/* MODAL 1: HISTORIAL */}
+            <Modal open={showConfirmModal} onClose={() => setShowConfirmModal(false)}>
+                <div className="p-8 text-center">
+                    <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-500 mx-auto flex items-center justify-center mb-6">
+                        <Trash2 size={32} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-2">¿Vaciar historial?</h2>
+                    <p className="text-textSub mb-8">Esta acción eliminará de forma permanente todas las canciones que has reproducido. No se puede deshacer.</p>
+                    <div className="flex items-center justify-center gap-3">
+                        <button className="px-6 py-2.5 rounded-xl text-sm font-medium text-textSub hover:text-white hover:bg-white/5 transition-colors" onClick={() => setShowConfirmModal(false)}>Cancelar</button>
+                        <button className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-red-500 hover:bg-red-600 text-white transition-colors shadow-[0_0_15px_rgba(239,68,68,0.4)]" onClick={() => { onVaciarHistorial(); setShowConfirmModal(false); }}>Sí, vaciar</button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* MODAL 2: RECOMENDACIONES */}
+            <Modal open={showRecConfirmModal} onClose={() => setShowRecConfirmModal(false)}>
+                <div className="p-8 text-center">
+                    <div className="w-16 h-16 rounded-full bg-[#22D3EE]/10 text-[#22D3EE] mx-auto flex items-center justify-center mb-6">
+                        <RefreshCw size={32} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-2">¿Resetear sugerencias?</h2>
+                    <p className="text-textSub mb-8">Esto limpiará las recomendaciones actuales de la pantalla. Nuevas sugerencias aparecerán a medida que escuches más música.</p>
+                    <div className="flex items-center justify-center gap-3">
+                        <button className="px-6 py-2.5 rounded-xl text-sm font-medium text-textSub hover:text-white hover:bg-white/5 transition-colors" onClick={() => setShowRecConfirmModal(false)}>Cancelar</button>
+                        <button className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-[#22D3EE] hover:bg-[#22D3EE]/90 text-background transition-colors shadow-[0_0_15px_rgba(34,211,238,0.4)]" onClick={() => { onResetRecomendaciones(); setShowRecConfirmModal(false); }}>Sí, resetear</button>
+                    </div>
+                </div>
+            </Modal>
         </main>
     );
 }
@@ -129,10 +208,11 @@ function MainContent({
 function DynamicHeader({ usuario, playlistsCount, favoritos }) {
     return (
         <section className="relative -mt-6 md:-mt-8 -mx-6 md:-mx-8 px-6 md:px-8 pt-10 pb-8 mb-8 bg-gradient-to-b from-primary/10 to-transparent border-b border-white/5">
-            <div className="relative z-10">
-                <p className="text-[#22D3EE] text-sm font-bold tracking-wider uppercase mb-1">Tu Espacio</p>
-                <h1 className="text-4xl md:text-5xl font-outfit font-bold text-white mb-6">¡Bienvenido de nuevo, {usuario?.nombreUsuario || 'Usuario'}!</h1>
-                <div className="flex items-center gap-4 text-textSub text-sm font-medium">
+            <div className="relative z-10 flex flex-col items-center text-center">
+                <h1 className="text-4xl md:text-5xl font-outfit font-bold text-white mb-6">
+                    ¡Bienvenido de nuevo, <span className="text-[#22D3EE]">{usuario?.nombreUsuario || 'Usuario'}</span>!
+                </h1>
+                <div className="flex items-center justify-center gap-4 text-textSub text-sm font-medium">
                     <span className="flex items-center gap-1.5"><Music size={16} className="text-primary"/> {playlistsCount} Playlists en total</span>
                     <span className="w-1 h-1 rounded-full bg-white/20" />
                     <span className="flex items-center gap-1.5"><Heart size={16} className="text-[#22D3EE]"/> {favoritos} Favoritos</span>
@@ -148,7 +228,7 @@ function Topbar({ busqueda, setBusqueda, onLogout }) {
             <div className="relative w-full max-w-md">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-textSub w-5 h-5" />
                 <input
-                    className="w-full bg-surface/50 border border-white/10 rounded-full pl-12 pr-10 py-2.5 text-sm text-textMain focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-textSub"
+                    className="w-full bg-surface/50 border border-white/10 rounded-full pl-12 pr-12 py-2.5 text-sm text-textMain focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors duration-300 ease-in-out placeholder:text-textSub"
                     value={busqueda}
                     onChange={(event) => setBusqueda(event.target.value)}
                     placeholder="¿Qué quieres reproducir?"
@@ -164,14 +244,11 @@ function Topbar({ busqueda, setBusqueda, onLogout }) {
                 )}
             </div>
             <div className="flex items-center gap-4">
-                <button className="p-2.5 rounded-full bg-surface/50 text-textSub hover:text-white hover:bg-surface transition-colors border border-white/5">
-                    <Bell size={18} />
-                </button>
                 <button
                     className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-surface/50 text-textSub hover:text-white hover:bg-red-500/20 hover:border-red-500/30 transition-colors border border-white/5"
                     onClick={onLogout}
                 >
-                    <span className="text-sm font-medium">Salir al login</span>
+                    <span className="text-sm font-medium">Cerrar sesión</span>
                     <LogOut size={16} />
                 </button>
             </div>
@@ -206,7 +283,7 @@ function Message({ mensaje, onClear }) {
     );
 }
 
-function LibrarySection({ title, subtitle, items, favoriteSet, pistaActual, jamendoActual, onPlay, onToggleFavorito, emptyMessage = 'No hay contenido para mostrar.' }) {
+function LibrarySection({ title, subtitle, items, favoriteSet, playlists, pistaActual, jamendoActual, onPlay, onToggleFavorito, onOpenAddToPlaylist, emptyMessage = 'No hay contenido para mostrar.', actionButton }) {
     const subtitleColor = title === 'Descubre en BanduMusic' ? 'text-[#22D3EE]' : 'text-textSub';
 
     return (
@@ -216,20 +293,31 @@ function LibrarySection({ title, subtitle, items, favoriteSet, pistaActual, jame
                     <p className={`${subtitleColor} text-sm font-medium mb-1`}>{subtitle}</p>
                     <h2 className="text-2xl font-bold text-white">{title}</h2>
                 </div>
-                <span className="text-sm text-textSub font-medium px-3 py-1 rounded-full bg-surface">{items.length} resultados</span>
+                <div className="flex items-center gap-4">
+                    {actionButton}
+                    <span className="text-sm text-[#22D3EE] font-medium px-3 py-1 rounded-full bg-surface">
+                        {items.length} resultados
+                    </span>
+                </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-                {items.map((item) => (
-                    <TrackCard
-                        key={item.historialId || `${item.fuente || 'LOCAL'}-${item.id}`}
-                        item={item}
-                        active={pistaActual?.id === item.id || jamendoActual?.id === item.id}
-                        favorite={favoriteSet.has(item.id)}
-                        onPlay={() => onPlay(item)}
-                        onToggleFavorite={() => onToggleFavorito(item)}
-                    />
-                ))}
+                {items.map((item) => {
+                    const isSaved = favoriteSet?.has(item.id) || playlists?.some(p => p.contenidos?.some(c => c.id === item.id));
+
+                    return (
+                        <TrackCard
+                            key={item.historialId || `${item.fuente || 'LOCAL'}-${item.id}`}
+                            item={item}
+                            active={pistaActual?.id === item.id || jamendoActual?.id === item.id}
+                            favorite={favoriteSet?.has(item.id)}
+                            isSaved={isSaved}
+                            onPlay={() => onPlay(item)}
+                            onToggleFavorite={() => onToggleFavorito(item)}
+                            onOpenAddToPlaylist={() => onOpenAddToPlaylist(item)}
+                        />
+                    );
+                })}
             </div>
 
             {items.length === 0 && (

@@ -1,18 +1,18 @@
 import { motion } from 'framer-motion';
-import { Home, Heart, History, Sparkles, Plus, ListMusic, PlayCircle } from 'lucide-react';
+import { Home, Heart, History, Sparkles, Plus, ListMusic } from 'lucide-react';
 
 function Sidebar({
                      usuario,
                      playlists,
                      favoritos,
+                     historial,
                      activeView,
                      onGoHome,
                      onOpenPlaylist,
                      onOpenFavorites,
                      onOpenHistory,
                      onOpenRecommendations,
-                     onCreatePlaylist,
-                     onPlay
+                     onCreatePlaylist
                  }) {
     return (
         <aside className="w-64 h-full glass flex flex-col border-r border-white/5">
@@ -27,7 +27,7 @@ function Sidebar({
                 <nav className="space-y-1">
                     <NavItem icon={<Home size={20} />} label="Inicio" active={activeView.type === 'home'} onClick={onGoHome} />
                     <NavItem icon={<Heart size={20} />} label="Tus favoritos" active={activeView.type === 'favorites'} onClick={onOpenFavorites} badge={favoritos.length} />
-                    <NavItem icon={<History size={20} />} label="Historial" active={activeView.type === 'history'} onClick={onOpenHistory} />
+                    <NavItem icon={<History size={20} />} label="Historial" active={activeView.type === 'history'} onClick={onOpenHistory} badge={historial.length} />
                     <NavItem icon={<Sparkles size={20} />} label="Para ti" active={activeView.type === 'recommendations'} onClick={onOpenRecommendations} />
                 </nav>
 
@@ -52,26 +52,6 @@ function Sidebar({
                                 <span className="text-xs opacity-50">{(playlist.contenidos || []).length}</span>
                             </button>
                         ))}
-                    </div>
-                </div>
-
-                <div>
-                    <div className="flex items-center justify-between px-2 mb-2">
-                        <span className="text-xs font-semibold text-textSub uppercase tracking-wider">Mix Reciente</span>
-                    </div>
-                    <div className="space-y-2 px-2">
-                        {favoritos.slice(0, 4).map((item) => (
-                            <div key={item.id} className="group flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer" onClick={() => onPlay(item)}>
-                                <div className="w-10 h-10 rounded-md bg-surface flex flex-shrink-0 items-center justify-center group-hover:bg-primary/20 transition-colors">
-                                    <PlayCircle size={20} className="text-textSub group-hover:text-primary" />
-                                </div>
-                                <div className="overflow-hidden">
-                                    <p className="text-sm font-medium text-white truncate">{item.titulo}</p>
-                                    <p className="text-xs text-textSub truncate">{item.artista || item.anfitrion || 'Sin autor'}</p>
-                                </div>
-                            </div>
-                        ))}
-                        {favoritos.length === 0 && <p className="text-xs text-textSub italic">Guarda contenido para verlo aquí.</p>}
                     </div>
                 </div>
             </div>

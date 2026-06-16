@@ -48,7 +48,7 @@ function CreatePlaylistModal({ open, onCancel, onAccept }) {
               setNombre(event.target.value);
               if (error) setError('');
             }}
-            placeholder="ej: Mi terapia"
+            placeholder="ej: Mi terapia musical"
           />
           {error && <p className="text-red-400 text-xs mt-2 font-medium">{error}</p>}
         </div>

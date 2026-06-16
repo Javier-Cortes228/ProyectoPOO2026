@@ -190,3 +190,9 @@ export function buscarJamendo(query, { limit = 30, offset = 0 } = {}) {
   });
   return request(`/api/jamendo/buscar?${params.toString()}`);
 }
+
+export function vaciarHistorial() {
+    return request('/api/historial/vaciar', {
+        method: 'DELETE'
+    });
+}

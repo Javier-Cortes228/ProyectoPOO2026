@@ -16,7 +16,8 @@ import {
     registrar,
     removerContenidoDePlaylist,
     verificarCodigoCorreo,
-    verificarCorreo
+    verificarCorreo,
+    vaciarHistorial
 } from './api/banduMusicApi.js';
 import AddMusicModal from './components/AddMusicModal.jsx';
 import AuthPanel from './components/AuthPanel.jsx';
@@ -24,6 +25,7 @@ import CreatePlaylistModal from './components/CreatePlaylistModal.jsx';
 import MainContent from './components/MainContent.jsx';
 import PlayerBar from './components/PlayerBar.jsx';
 import Sidebar from './components/Sidebar.jsx';
+import AddToPlaylistModal from './components/AddToPlaylistModal.jsx';
 
 function App() {
     const [usuario, setUsuario] = useState(null);
@@ -42,6 +44,7 @@ function App() {
     const [mensaje, setMensaje] = useState('');
     const [isCreatePlaylistOpen, setCreatePlaylistOpen] = useState(false);
     const [isAddMusicOpen, setAddMusicOpen] = useState(false);
+    const [trackToAdd, setTrackToAdd] = useState(null);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -182,6 +185,60 @@ function App() {
             setActiveView({ type: 'home' });
             setMensaje(`Playlist "${activePlaylist.nombre}" eliminada.`);
         } catch (error) { setMensaje(error.message); }
+    }
+
+    async function handleVaciarHistorial() {
+        try {
+            await vaciarHistorial();
+            setHistorial([]);
+            setRecomendaciones([]);
+            setMensaje('El historial se ha vaciado correctamente.');
+        } catch (error) {
+            setMensaje(error.message);
+        }
+    }
+
+    function handleResetRecomendaciones() {
+        setRecomendaciones([]);
+        setMensaje('Las recomendaciones han sido reseteadas.');
+    }
+
+    async function handleTogglePlaylistTrack(playlistId, track, isInPlaylist) {
+        try {
+            if (isInPlaylist) {
+                await removerContenidoDePlaylist(playlistId, track.id);
+                actualizarPlaylist(playlistId, (playlist) => {
+                    const contenidos = (playlist.contenidos || []).filter((c) => c.id !== track.id);
+                    return { ...playlist, contenidos, duracionTotalSegundos: calcularDuracion(contenidos) };
+                });
+            } else {
+                if (esContenidoJamendo(track)) {
+                    const playlistActualizada = normalizarPlaylist(await agregarJamendoAPlaylist(playlistId, track));
+                    reemplazarPlaylist(playlistActualizada);
+                } else {
+                    await agregarContenidoAPlaylist(playlistId, track.id);
+                    const contenido = catalogo.find((item) => item.id === track.id) || track;
+                    actualizarPlaylist(playlistId, (playlist) => {
+                        const contenidos = [...(playlist.contenidos || []), contenido];
+                        return { ...playlist, contenidos, duracionTotalSegundos: calcularDuracion(contenidos) };
+                    });
+                }
+            }
+        } catch (error) {
+            setMensaje(error.message);
+        }
+    }
+
+    async function handleCreatePlaylistAndAdd(nombre, track) {
+        if (!usuario) return;
+        try {
+            const nuevaPlaylist = normalizarPlaylist(await crearPlaylist(usuario.id, nombre));
+            setUsuario((actual) => ({ ...actual, playlist: [...(actual.playlist || []), nuevaPlaylist] }));
+            await handleTogglePlaylistTrack(nuevaPlaylist.id, track, false);
+            setMensaje(`Playlist "${nombre}" creada exitosamente.`);
+        } catch (error) {
+            setMensaje(error.message);
+        }
     }
 
     function actualizarPlaylist(playlistId, actualizar) {
@@ -336,6 +393,7 @@ function App() {
                     usuario={usuario}
                     playlists={playlistsVisibles}
                     favoritos={favoritos}
+                    historial={historial}
                     activeView={activeView}
                     onGoHome={() => setActiveView({ type: 'home' })}
                     onOpenPlaylist={(playlistId) => setActiveView({ type: 'playlist', playlistId })}
@@ -374,9 +432,13 @@ function App() {
                     playlists={playlistsVisibles}
                     onAddJamendoToPlaylist={handleAgregarJamendoAPlaylist}
                     onLogout={handleLogout}
+                    onVaciarHistorial={handleVaciarHistorial}
+                    onResetRecomendaciones={handleResetRecomendaciones}
+                    onOpenAddToPlaylist={setTrackToAdd}
                 />
             </div>
 
+            {/* SE PASAN LAS FUNCIONES AL PLAYERBAR PARA SU PROPIO MENÚ FLOTANTE */}
             <PlayerBar
                 pista={pistaActual}
                 jamendoTrack={jamendoActual}
@@ -391,6 +453,11 @@ function App() {
                     jamendoActual
                 )}
                 onPlayLocal={reproducirLocal}
+                playlists={playlistsVisibles}
+                favoritosIds={favoritosIds}
+                onToggleFavorito={toggleFavorito}
+                onTogglePlaylist={handleTogglePlaylistTrack}
+                onCreatePlaylist={handleCreatePlaylistAndAdd}
             />
 
             {jamendoPreloadUrl && <audio className="hidden" src={jamendoPreloadUrl} preload="auto" />}
@@ -408,18 +475,23 @@ function App() {
                 onCancel={() => setAddMusicOpen(false)}
                 onAccept={handleAgregarMusica}
             />
+
+            <AddToPlaylistModal
+                open={!!trackToAdd}
+                track={trackToAdd}
+                playlists={playlistsVisibles}
+                favoritosIds={favoritosIds}
+                onClose={() => setTrackToAdd(null)}
+                onToggleFavorito={toggleFavorito}
+                onTogglePlaylist={handleTogglePlaylistTrack}
+                onCreatePlaylist={handleCreatePlaylistAndAdd}
+            />
         </div>
     );
 }
 
-function normalizarUsuario(usuario) {
-    return { ...usuario, playlist: (usuario.playlist || []).map(normalizarPlaylist) };
-}
-
-function normalizarPlaylist(playlist) {
-    return { ...playlist, contenidos: playlist.contenidos || [], duracionTotalSegundos: playlist.duracionTotalSegundos || 0 };
-}
-
+function normalizarUsuario(usuario) { return { ...usuario, playlist: (usuario.playlist || []).map(normalizarPlaylist) }; }
+function normalizarPlaylist(playlist) { return { ...playlist, contenidos: playlist.contenidos || [], duracionTotalSegundos: playlist.duracionTotalSegundos || 0 }; }
 function normalizarHistorialItem(item) {
     const contenidoId = item.contenidoId || item.id;
     return {
@@ -430,11 +502,9 @@ function normalizarHistorialItem(item) {
         tipo: item.tipo || (item.fuente === 'JAMENDO' ? 'JAMENDO' : 'CONTENIDO_AUDIO')
     };
 }
-
 function calcularDuracion(items) { return items.reduce((total, item) => total + (item.duracionSegundos || 0), 0); }
 function esContenidoJamendo(item) { return item?.tipo === 'JAMENDO' || item?.fuente === 'JAMENDO' || Boolean(item?.audioUrl); }
 function esPlaylistFavoritos(playlist) { return playlist?.nombre?.trim().toLowerCase() === 'favoritos'; }
-
 function obtenerColaReproduccion(activeView, activePlaylist, favoritos, catalogo, historial, recomendaciones, jamendoResultados, jamendoActual) {
     if (activeView.type === 'playlist' && activePlaylist) return activePlaylist.contenidos || [];
     if (activeView.type === 'favorites') return favoritos;

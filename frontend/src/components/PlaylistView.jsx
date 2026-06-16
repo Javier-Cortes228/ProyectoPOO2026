@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Plus, Trash2, ListMusic } from 'lucide-react';
 import TrackCard from './TrackCard.jsx';
 
@@ -25,7 +24,7 @@ function PlaylistView({
               <ListMusic size={48} className="text-primary/50" />
             </div>
             <div className="pb-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-primary mb-2">PLAYLIST PROPIA</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-primary mb-2">PLAYLIST PUBLICA</p>
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{playlist.nombre}</h1>
               <span className="text-sm text-textSub font-medium">{contenidos.length} pistas en esta lista</span>
             </div>
