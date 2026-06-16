@@ -27,6 +27,19 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal, playlists, favorit
 
     const isSaved = current ? (favoritosIds.includes(current.id) || playlists.some(p => p.contenidos?.some(c => c.id === current.id))) : false;
 
+    const [hoverVolume, setHoverVolume] = useState(null);
+    const [hoverVolumeX, setHoverVolumeX] = useState(0);
+
+    const handleVolumeHover = (e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const percentage = Math.max(0, Math.min(1, x / rect.width));
+        setHoverVolumeX(x);
+        setHoverVolume(percentage);
+    };
+
+    const handleVolumeLeave = () => setHoverVolume(null);
+
     useEffect(() => {
         function handleClickOutside(event) {
             if (popoverRef.current && !popoverRef.current.contains(event.target)) {
@@ -51,7 +64,7 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal, playlists, favorit
         const audio = audioRef.current;
         if (!audio) return;
         audio.volume = effectiveVolume;
-    }, [effectiveVolume]);
+    }, [effectiveVolume, current?.id]);
 
     useEffect(() => {
         setCurrentTime(0);
@@ -127,8 +140,8 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal, playlists, favorit
                         <Music size={24} className="text-textSub" />
                     </div>
                     <div>
-                        <strong className="block text-white text-sm font-medium">Selecciona contenido</strong>
-                        <small className="text-textSub text-xs">BanduMusic Hub o Jamendo</small>
+                        <strong className="block text-white text-sm font-medium">Comienza a reproducir...</strong>
+                        <small className="text-textSub text-xs">BanduMusic o Jamendo</small>
                     </div>
                 </div>
             </footer>
@@ -163,7 +176,10 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal, playlists, favorit
 
                 <div className="flex items-center justify-between min-w-0 flex-1">
                     <div className="overflow-hidden min-w-0 pr-4">
-                        <strong className="block text-white text-sm font-semibold truncate">{current.titulo}</strong>
+                        <div className="flex items-center gap-3">
+                            <strong className="block text-white text-sm font-semibold truncate">{current.titulo}</strong>
+                            <AudioWaveform isPlaying={isPlaying} />
+                        </div>
                         <small className="block text-textSub text-xs truncate mt-0.5">{current.artista || current.anfitrion || 'Sin autor'}</small>
                         {jamendoTrack && (
                             <a href={jamendoTrack.jamendoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] text-[#22D3EE] hover:text-white transition-colors mt-1">
@@ -302,9 +318,9 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal, playlists, favorit
                             onChange={seek}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20 peer"
                         />
-                        <div className="absolute left-0 right-0 h-1 bg-white/20 rounded-full transition-all peer-hover:h-1.5" />
-                        <div className="absolute left-0 h-1 bg-white rounded-full pointer-events-none transition-all peer-hover:bg-primary peer-hover:h-1.5 flex items-center justify-end" style={{ width: `${progress}%` }}>
-                            <div className="w-3 h-3 bg-white rounded-full shadow-md opacity-0 peer-hover:opacity-100 group-hover:opacity-100 translate-x-1.5" />
+                        <div className="absolute left-0 right-0 h-1 bg-white/20 rounded-full transition-all group-hover:h-1.5 peer-hover:h-1.5" />
+                        <div className="absolute left-0 h-1 bg-white rounded-full pointer-events-none transition-all group-hover:bg-[#3a89ff] peer-hover:bg-[#3a89ff] group-hover:h-1.5 peer-hover:h-1.5" style={{ width: `${progress}%` }}>
+                            <div className="absolute right-0 translate-x-1/2 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 peer-hover:opacity-100 z-30" />
                         </div>
 
                         <AnimatePresence>
@@ -331,7 +347,11 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal, playlists, favorit
                 <button onClick={toggleMute} className="text-textSub hover:text-white transition-colors" aria-label={isMuted ? 'Activar sonido' : 'Silenciar'}>
                     <VolumeIcon size={20} />
                 </button>
-                <div className="relative w-28 h-4 flex items-center">
+                <div
+                    className="relative w-28 h-4 flex items-center cursor-pointer"
+                    onMouseMove={handleVolumeHover}
+                    onMouseLeave={handleVolumeLeave}
+                >
                     <input
                         type="range"
                         min="0"
@@ -341,10 +361,25 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal, playlists, favorit
                         onChange={changeVolume}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20 peer"
                     />
-                    <div className="absolute left-0 right-0 h-1 bg-white/20 rounded-full transition-all peer-hover:h-1.5" />
-                    <div className="absolute left-0 h-1 bg-white rounded-full pointer-events-none transition-all peer-hover:bg-primary peer-hover:h-1.5 flex items-center justify-end" style={{ width: `${effectiveVolume * 100}%` }}>
-                        <div className="w-3 h-3 bg-white rounded-full shadow-md opacity-0 peer-hover:opacity-100 translate-x-1.5" />
+                    <div className="absolute left-0 right-0 h-1 bg-white/20 rounded-full transition-all group-hover:h-1.5 peer-hover:h-1.5" />
+                    <div className="absolute left-0 h-1 bg-white rounded-full pointer-events-none transition-all group-hover:bg-[#3a89ff] peer-hover:bg-[#3a89ff] group-hover:h-1.5 peer-hover:h-1.5" style={{ width: `${effectiveVolume * 100}%` }}>
+                        <div className="absolute right-0 translate-x-1/2 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 peer-hover:opacity-100 z-30" />
                     </div>
+
+                    <AnimatePresence>
+                        {hoverVolume !== null && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 5 }}
+                                transition={{ duration: 0.15 }}
+                                className="absolute bottom-6 -translate-x-1/2 bg-surface border border-white/10 text-white text-[11px] font-bold px-2 py-1 rounded-md shadow-lg pointer-events-none z-50 whitespace-nowrap"
+                                style={{ left: `${hoverVolumeX}px` }}
+                            >
+                                {Math.round(hoverVolume * 100)}%
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         </footer>
@@ -356,6 +391,28 @@ function formatTime(seconds) {
     const minutes = Math.floor(safeSeconds / 60);
     const remaining = String(safeSeconds % 60).padStart(2, '0');
     return `${minutes}:${remaining}`;
+}
+
+function AudioWaveform({ isPlaying }) {
+    return (
+        <div className="flex items-end gap-[2px] h-3.5">
+            {[1, 2, 3, 4].map((bar) => (
+                <motion.div
+                    key={bar}
+                    className="w-1 bg-[#22D3EE] rounded-t-sm shadow-[0_0_8px_rgba(34,211,238,0.5)]"
+                    animate={isPlaying ? {
+                        height: ["20%", "100%", "40%", "80%", "20%"]
+                    } : { height: "20%" }}
+                    transition={isPlaying ? {
+                        duration: 0.8,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: bar * 0.1
+                    } : { duration: 0.3 }}
+                />
+            ))}
+        </div>
+    );
 }
 
 export default PlayerBar;

@@ -77,7 +77,7 @@ function MainContent({
     if (activeView.type === 'playlist' && activePlaylist) {
         content = <PlaylistView playlist={activePlaylist} favoriteSet={favoriteSet} pistaActual={pistaActual} onPlay={onPlayLocal} onAddMusic={onAddMusic} onRemove={onRemoveFromPlaylist} onDeletePlaylist={onDeletePlaylist} onToggleFavorito={onToggleFavorito} />;
     } else if (activeView.type === 'favorites') {
-        content = <LibrarySection title="Tus favoritos" subtitle="Contenido marcado como favorito" items={favoritos.filter((item) => coincideConFiltro(item, filtroGlobal))} favoriteSet={favoriteSet} playlists={playlists} pistaActual={pistaActual} onPlay={onPlayLocal} onToggleFavorito={onToggleFavorito} onOpenAddToPlaylist={onOpenAddToPlaylist} />;
+        content = <LibrarySection title="Tus favoritos" subtitle="Contenido marcado como favorito" items={favoritos.filter((item) => coincideConFiltro(item, filtroGlobal))} favoriteSet={favoriteSet} playlists={playlists} pistaActual={pistaActual} onPlay={onPlayLocal} onToggleFavorito={onToggleFavorito} onOpenAddToPlaylist={onOpenAddToPlaylist} showCount={false} />;
     } else if (activeView.type === 'history') {
         content = <LibrarySection
             title="Historial reciente"
@@ -91,13 +91,14 @@ function MainContent({
             onToggleFavorito={onToggleFavorito}
             onOpenAddToPlaylist={onOpenAddToPlaylist}
             emptyMessage="Aún no hay reproducciones registradas."
+            showCount={false}
             actionButton={
                 historial.length > 0 && (
                     <button
                         onClick={() => setShowConfirmModal(true)}
                         className="text-sm font-semibold text-[#22D3EE] hover:text-white bg-surface hover:bg-white/5 border border-white/10 px-5 py-2.5 rounded-full transition-colors flex items-center gap-2 shadow-soft"
                     >
-                        <Trash2 size={16} /> Vaciar historial
+                        <Trash2 size={16} /> Borrar historial
                     </button>
                 )
             }
@@ -115,13 +116,14 @@ function MainContent({
             onToggleFavorito={onToggleFavorito}
             onOpenAddToPlaylist={onOpenAddToPlaylist}
             emptyMessage="Reproduce canciones para generar recomendaciones personalizadas."
+            showCount={false}
             actionButton={
                 recomendaciones?.length > 0 && (
                     <button
                         onClick={() => setShowRecConfirmModal(true)}
                         className="text-sm font-semibold text-[#22D3EE] hover:text-white bg-surface hover:bg-white/5 border border-white/10 px-5 py-2.5 rounded-full transition-colors flex items-center gap-2 shadow-soft"
                     >
-                        <RefreshCw size={16} /> Resetear sugerencias
+                        <RefreshCw size={16} /> Reiniciar sugerencias
                     </button>
                 )
             }
@@ -178,11 +180,11 @@ function MainContent({
                     <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-500 mx-auto flex items-center justify-center mb-6">
                         <Trash2 size={32} />
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-2">¿Vaciar historial?</h2>
+                    <h2 className="text-2xl font-bold text-white mb-2">¿Borrar tu historial?</h2>
                     <p className="text-textSub mb-8">Esta acción eliminará de forma permanente todas las canciones que has reproducido. No se puede deshacer.</p>
                     <div className="flex items-center justify-center gap-3">
                         <button className="px-6 py-2.5 rounded-xl text-sm font-medium text-textSub hover:text-white hover:bg-white/5 transition-colors" onClick={() => setShowConfirmModal(false)}>Cancelar</button>
-                        <button className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-red-500 hover:bg-red-600 text-white transition-colors shadow-[0_0_15px_rgba(239,68,68,0.4)]" onClick={() => { onVaciarHistorial(); setShowConfirmModal(false); }}>Sí, vaciar</button>
+                        <button className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-red-500 hover:bg-red-600 text-white transition-colors shadow-[0_0_15px_rgba(239,68,68,0.4)]" onClick={() => { onVaciarHistorial(); setShowConfirmModal(false); }}>Sí, eliminar</button>
                     </div>
                 </div>
             </Modal>
@@ -193,11 +195,11 @@ function MainContent({
                     <div className="w-16 h-16 rounded-full bg-[#22D3EE]/10 text-[#22D3EE] mx-auto flex items-center justify-center mb-6">
                         <RefreshCw size={32} />
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-2">¿Resetear sugerencias?</h2>
-                    <p className="text-textSub mb-8">Esto limpiará las recomendaciones actuales de la pantalla. Nuevas sugerencias aparecerán a medida que escuches más música.</p>
+                    <h2 className="text-2xl font-bold text-white mb-2">¿Reiniciar sugerencias?</h2>
+                    <p className="text-textSub mb-8">Esta acción quitará las sgurencias actuales. Nuevas sugerencias aparecerán a medida que escuches más música.</p>
                     <div className="flex items-center justify-center gap-3">
                         <button className="px-6 py-2.5 rounded-xl text-sm font-medium text-textSub hover:text-white hover:bg-white/5 transition-colors" onClick={() => setShowRecConfirmModal(false)}>Cancelar</button>
-                        <button className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-[#22D3EE] hover:bg-[#22D3EE]/90 text-background transition-colors shadow-[0_0_15px_rgba(34,211,238,0.4)]" onClick={() => { onResetRecomendaciones(); setShowRecConfirmModal(false); }}>Sí, resetear</button>
+                        <button className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-[#22D3EE] hover:bg-[#22D3EE]/90 text-background transition-colors shadow-[0_0_15px_rgba(34,211,238,0.4)]" onClick={() => { onResetRecomendaciones(); setShowRecConfirmModal(false); }}>Sí, reiniciar</button>
                     </div>
                 </div>
             </Modal>
@@ -283,7 +285,7 @@ function Message({ mensaje, onClear }) {
     );
 }
 
-function LibrarySection({ title, subtitle, items, favoriteSet, playlists, pistaActual, jamendoActual, onPlay, onToggleFavorito, onOpenAddToPlaylist, emptyMessage = 'No hay contenido para mostrar.', actionButton }) {
+function LibrarySection({ title, subtitle, items, favoriteSet, playlists, pistaActual, jamendoActual, onPlay, onToggleFavorito, onOpenAddToPlaylist, emptyMessage = 'No hay contenido para mostrar.', actionButton, showCount = true }) {
     const subtitleColor = title === 'Descubre en BanduMusic' ? 'text-[#22D3EE]' : 'text-textSub';
 
     return (
@@ -295,9 +297,11 @@ function LibrarySection({ title, subtitle, items, favoriteSet, playlists, pistaA
                 </div>
                 <div className="flex items-center gap-4">
                     {actionButton}
-                    <span className="text-sm text-[#22D3EE] font-medium px-3 py-1 rounded-full bg-surface">
-                        {items.length} resultados
-                    </span>
+                    {showCount && (
+                        <span className="text-sm text-[#22D3EE] font-medium px-3 py-1 rounded-full bg-surface">
+                            {items.length} resultados
+                        </span>
+                    )}
                 </div>
             </div>
 

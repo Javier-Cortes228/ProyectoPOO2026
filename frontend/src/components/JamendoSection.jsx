@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Loader2, Play, Plus, Heart, ExternalLink, Check, X } from 'lucide-react';
 
-const QUICK_SEARCHES = ['rock', 'electrónica', 'jazz', 'relajación', 'pop', 'hip hop', 'indie', 'clásica', 'metal', 'reggae', 'acústico','trap',"techno","house"];
+const QUICK_SEARCHES = ['rock', 'electrónica', 'jazz', 'relajación', 'pop', 'hip hop', 'indie', 'clásica', 'metal', 'reggae', 'acústico','trap',"techno","house",'phonk'];
 
 function JamendoSection({
                             resultados,
@@ -79,7 +79,7 @@ function JamendoSection({
                             className="w-full bg-background border border-white/10 rounded-xl pl-12 pr-12 py-3 text-white focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-colors placeholder:text-textSub"
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
-                            placeholder="Busca por título, género, álbum, artista..."
+                            placeholder="Busca por título, género, álbum o artista..."
                         />
                         {query && (
                             <button
