@@ -1,137 +1,169 @@
-import { useMemo, useState } from 'react';
-import { Search, Music2, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, X, Music, Check, Plus, Loader2, Play, Pause } from 'lucide-react';
 import Modal from './Modal.jsx';
+import { buscarJamendo } from '../api/banduMusicApi.js';
 
-function AddMusicModal({ open, catalogo, playlist, onCancel, onAccept }) {
-  const [nombre, setNombre] = useState('');
-  const [artista, setArtista] = useState('');
-  const [seleccionados, setSeleccionados] = useState([]);
+function AddMusicModal({ open, catalogo, playlist, onCancel, onToggleTrack, pistaActual, jamendoActual, globalIsPlaying, onPlay }) {
+    const [tab, setTab] = useState('local');
+    const [busqueda, setBusqueda] = useState('');
+    const [jamendoResultados, setJamendoResultados] = useState([]);
+    const [cargando, setCargando] = useState(false);
 
-  const existentes = useMemo(() => new Set((playlist?.contenidos || []).map((item) => item.id)), [playlist]);
+    const currentTrack = pistaActual || jamendoActual;
 
-  const resultados = useMemo(() => {
-    const nombreFiltro = nombre.trim().toLowerCase();
-    const artistaFiltro = artista.trim().toLowerCase();
+    useEffect(() => {
+        if (!open) {
+            setBusqueda('');
+            setJamendoResultados([]);
+            setTab('local');
+        }
+    }, [open]);
 
-    return catalogo.filter((item) => {
-      const coincideNombre = !nombreFiltro || item.titulo.toLowerCase().includes(nombreFiltro);
-      const creador = (item.artista || item.anfitrion || '').toLowerCase();
-      const coincideArtista = !artistaFiltro || creador.includes(artistaFiltro);
-      return coincideNombre && coincideArtista;
-    });
-  }, [catalogo, nombre, artista]);
+    useEffect(() => {
+        if (tab !== 'jamendo' || busqueda.length < 2) {
+            if (busqueda.length === 0) setJamendoResultados([]);
+            return;
+        }
+        const delay = setTimeout(async () => {
+            setCargando(true);
+            try {
+                const res = await buscarJamendo(busqueda, { limit: 15 });
+                setJamendoResultados(res);
+            } catch (e) {
+                console.error("Error buscando en Jamendo:", e);
+            } finally {
+                setCargando(false);
+            }
+        }, 500);
 
-  function toggle(id) {
-    setSeleccionados((actual) => {
-      if (actual.includes(id)) {
-        return actual.filter((itemId) => itemId !== id);
-      }
-      return [...actual, id];
-    });
-  }
+        return () => clearTimeout(delay);
+    }, [busqueda, tab]);
 
-  async function accept() {
-    await onAccept(seleccionados);
-    setSeleccionados([]);
-    setNombre('');
-    setArtista('');
-  }
+    if (!playlist) return null;
 
-  function cancel() {
-    setSeleccionados([]);
-    setNombre('');
-    setArtista('');
-    onCancel();
-  }
+    const filtradosLocal = catalogo.filter(item =>
+        item.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
+        (item.artista || '').toLowerCase().includes(busqueda.toLowerCase())
+    );
 
-  return (
-    <Modal open={open} onClose={cancel} size="large">
-      <div className="flex flex-col h-[80vh] max-h-[800px]">
-        <div className="p-6 border-b border-white/5 flex items-center justify-between bg-surface/30">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-primary mb-1">Agregar al catálogo</p>
-            <h2 className="text-2xl font-bold text-white">{playlist?.nombre || 'Playlist'}</h2>
-          </div>
-          <div className="px-4 py-1.5 rounded-full bg-surface text-sm font-medium text-textSub">
-            <span className="text-white">{seleccionados.length}</span> seleccionadas
-          </div>
-        </div>
+    const itemsMostrar = tab === 'local' ? filtradosLocal : jamendoResultados;
 
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-background/50 border-b border-white/5">
-           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-textSub w-4 h-4" />
-            <input
-              className="w-full bg-surface border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary transition-colors"
-              value={nombre}
-              onChange={(event) => setNombre(event.target.value)}
-              placeholder="Buscar por título..."
-            />
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-textSub w-4 h-4" />
-            <input
-              className="w-full bg-surface border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary transition-colors"
-              value={artista}
-              onChange={(event) => setArtista(event.target.value)}
-              placeholder="Buscar por artista..."
-            />
-          </div>
-        </div>
+    return (
+        <Modal open={open} onClose={onCancel}>
+            <div className="flex flex-col h-[600px] max-h-[85vh] w-full sm:w-[500px] max-w-full overflow-hidden">
+                <div className="p-6 border-b border-white/5 flex flex-col gap-4 shrink-0">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-xl font-bold text-white">Agregar a playlist</h2>
+                            <p className="text-sm text-[#22D3EE] font-medium truncate">{playlist.nombre}</p>
+                        </div>
+                        <button onClick={onCancel} className="p-2 text-textSub hover:text-white transition-colors rounded-full hover:bg-white/5">
+                            <X size={20} />
+                        </button>
+                    </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
-          {resultados.map((item) => {
-            const disabled = existentes.has(item.id);
-            const checked = seleccionados.includes(item.id);
-            return (
-              <label
-                key={item.id}
-                className={`flex items-center gap-4 p-3 rounded-xl border transition-all cursor-pointer ${disabled ? 'opacity-50 bg-surface/50 border-transparent cursor-not-allowed' : checked ? 'bg-primary/10 border-primary' : 'bg-surface/30 border-white/5 hover:border-white/20'}`}
-              >
-                <div className="relative flex items-center justify-center w-5 h-5">
-                   <input
-                    type="checkbox"
-                    className="appearance-none w-5 h-5 border-2 border-textSub rounded cursor-pointer checked:bg-primary checked:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    checked={checked || disabled}
-                    disabled={disabled}
-                    onChange={() => toggle(item.id)}
-                  />
-                  {(checked || disabled) && <Check size={14} className="absolute text-white pointer-events-none" />}
+                    <div className="flex p-1 bg-surface/50 rounded-xl border border-white/5 w-full">
+                        <button
+                            className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors ${tab === 'local' ? 'bg-[#3a89ff] text-white shadow-md' : 'text-textSub hover:text-white'}`}
+                            onClick={() => { setTab('local'); setBusqueda(''); }}
+                        >
+                            BanduMusic
+                        </button>
+                        <button
+                            className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors ${tab === 'jamendo' ? 'bg-[#3a89ff] text-white shadow-md' : 'text-textSub hover:text-white'}`}
+                            onClick={() => { setTab('jamendo'); setBusqueda(''); }}
+                        >
+                            Jamendo
+                        </button>
+                    </div>
+
+                    <div className="relative mt-2">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-textSub w-4 h-4" />
+                        <input
+                            className="w-full bg-surface border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#22D3EE] transition-colors placeholder:text-textSub"
+                            placeholder={tab === 'local' ? "Buscar en BanduMusic..." : "Buscar en Jamendo..."}
+                            value={busqueda}
+                            onChange={e => setBusqueda(e.target.value)}
+                        />
+                    </div>
                 </div>
 
-                <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center flex-shrink-0">
-                  <Music2 size={20} className={checked ? 'text-primary' : 'text-textSub'} />
+                <div className="flex-1 overflow-y-auto p-2">
+                    {cargando ? (
+                        <div className="flex flex-col items-center justify-center h-full text-textSub">
+                            <Loader2 size={32} className="animate-spin mb-4 text-[#3a89ff]" />
+                            <p className="text-sm">Buscando en Jamendo...</p>
+                        </div>
+                    ) : itemsMostrar.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full text-textSub px-6 text-center">
+                            <Music size={40} className="mb-4 opacity-20" />
+                            <p className="text-sm">No se encontraron resultados.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-1">
+                            {itemsMostrar.map(track => {
+                                const isInPlaylist = playlist.contenidos?.some(c => c.id === track.id);
+                                const isPlayingThis = currentTrack?.id === track.id && globalIsPlaying;
+
+                                return (
+                                    <div key={track.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group">
+                                        <div
+                                            className="relative w-12 h-12 rounded-lg bg-surface border border-white/5 overflow-hidden shrink-0 cursor-pointer"
+                                            onClick={() => {
+                                                if (currentTrack?.id === track.id) {
+                                                    window.dispatchEvent(new CustomEvent('bandu-toggle-play'));
+                                                } else {
+                                                    onPlay(track);
+                                                }
+                                            }}
+                                        >
+                                            {track.imagenUrl ? (
+                                                <img src={track.imagenUrl} alt="" className={`w-full h-full object-cover transition-opacity ${isPlayingThis ? 'opacity-50' : 'group-hover:opacity-50'}`} />
+                                            ) : (
+                                                <div className={`w-full h-full flex items-center justify-center transition-opacity ${isPlayingThis ? 'opacity-50' : 'group-hover:opacity-50'}`}>
+                                                    <Music size={16} className="text-textSub" />
+                                                </div>
+                                            )}
+
+                                            <div className={`absolute inset-0 flex items-center justify-center transition-opacity ${isPlayingThis ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                                {isPlayingThis ? (
+                                                    <Pause size={24} className="text-[#22D3EE] fill-current shadow-lg" />
+                                                ) : (
+                                                    <Play size={24} className="text-[#22D3EE] fill-current ml-1 drop-shadow-md" />
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <p className={`text-sm font-semibold truncate ${isPlayingThis ? 'text-[#22D3EE]' : 'text-white'}`}>{track.titulo}</p>
+                                            <p className="text-xs text-textSub truncate">{track.artista || 'Sin autor'}</p>
+                                        </div>
+
+                                        <button
+                                            className={`shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${isInPlaylist ? 'bg-[#22D3EE] border-[#22D3EE] text-background' : 'border-[#22D3EE] text-[#22D3EE] hover:bg-[#22D3EE] hover:text-background'}`}
+                                            onClick={() => onToggleTrack(playlist.id, track, isInPlaylist)}
+                                            title={isInPlaylist ? "Quitar de la playlist" : "Agregar a la playlist"}
+                                        >
+                                            {isInPlaylist ? <Check size={16} strokeWidth={3} /> : <Plus size={16} strokeWidth={3} />}
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
-                <div className="flex-1 min-w-0">
-                  <strong className="block text-sm font-semibold text-white truncate">{item.titulo}</strong>
-                  <small className="block text-xs text-textSub truncate">{item.artista || item.anfitrion || 'Sin autor'} • {item.tipo}</small>
+                <div className="p-4 border-t border-white/5 bg-surface/30 flex justify-end shrink-0">
+                    <button
+                        className="px-8 py-2.5 rounded-xl text-sm font-bold bg-[#3a89ff] hover:bg-[#3a89ff]/90 text-white transition-colors shadow-glow"
+                        onClick={onCancel}
+                    >
+                        Cerrar
+                    </button>
                 </div>
-
-                {disabled && <span className="text-xs font-semibold px-2 py-1 rounded bg-white/5 text-textSub">Agregada</span>}
-              </label>
-            );
-          })}
-
-          {resultados.length === 0 && (
-            <div className="text-center py-12 text-textSub">
-              No se encontraron resultados para tu búsqueda.
             </div>
-          )}
-        </div>
-
-        <div className="p-6 border-t border-white/5 bg-surface/30 flex items-center justify-end gap-3">
-          <button type="button" className="px-6 py-2.5 rounded-xl text-sm font-medium text-textSub hover:text-white hover:bg-white/5 transition-colors" onClick={cancel}>Cancelar</button>
-          <button
-            className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-primary hover:bg-primary/90 text-white transition-colors shadow-glow disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={accept}
-            disabled={seleccionados.length === 0}
-          >
-            Agregar a Playlist
-          </button>
-        </div>
-      </div>
-    </Modal>
-  );
+        </Modal>
+    );
 }
 
 export default AddMusicModal;

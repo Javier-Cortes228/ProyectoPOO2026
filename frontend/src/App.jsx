@@ -34,8 +34,14 @@ function App() {
     const [historial, setHistorial] = useState([]);
     const [recomendaciones, setRecomendaciones] = useState([]);
     const [activeView, setActiveView] = useState({ type: 'home' });
-    const [pistaActual, setPistaActual] = useState(null);
-    const [jamendoActual, setJamendoActual] = useState(null);
+    const [pistaActual, setPistaActual] = useState(() => {
+        const saved = localStorage.getItem('bandu-pista-actual');
+        return saved ? JSON.parse(saved) : null;
+    });
+    const [jamendoActual, setJamendoActual] = useState(() => {
+        const saved = localStorage.getItem('bandu-jamendo-actual');
+        return saved ? JSON.parse(saved) : null;
+    });
     const [jamendoResultados, setJamendoResultados] = useState([]);
     const [jamendoQuery, setJamendoQuery] = useState('');
     const [jamendoOffset, setJamendoOffset] = useState(0);
@@ -45,6 +51,8 @@ function App() {
     const [isCreatePlaylistOpen, setCreatePlaylistOpen] = useState(false);
     const [isAddMusicOpen, setAddMusicOpen] = useState(false);
     const [trackToAdd, setTrackToAdd] = useState(null);
+    const [isShuffle, setIsShuffle] = useState(false);
+    const [globalIsPlaying, setGlobalIsPlaying] = useState(false);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -76,6 +84,19 @@ function App() {
         cargarHistorial().then((items) => setHistorial(items.map(normalizarHistorialItem))).catch((error) => setMensaje(error.message));
         cargarRecomendaciones().then(setRecomendaciones).catch((error) => setMensaje(error.message));
     }, [usuario?.id]);
+
+    useEffect(() => {
+        if (pistaActual) {
+            localStorage.setItem('bandu-pista-actual', JSON.stringify(pistaActual));
+            localStorage.removeItem('bandu-jamendo-actual');
+        } else if (jamendoActual) {
+            localStorage.setItem('bandu-jamendo-actual', JSON.stringify(jamendoActual));
+            localStorage.removeItem('bandu-pista-actual');
+        } else {
+            localStorage.removeItem('bandu-pista-actual');
+            localStorage.removeItem('bandu-jamendo-actual');
+        }
+    }, [pistaActual, jamendoActual]);
 
     const playlists = usuario?.playlist || [];
     const playlistFavoritos = useMemo(() => playlists.find((playlist) => esPlaylistFavoritos(playlist)) || null, [playlists]);
@@ -192,7 +213,7 @@ function App() {
             await vaciarHistorial();
             setHistorial([]);
             setRecomendaciones([]);
-            setMensaje('El historial se ha vaciado correctamente.');
+            setMensaje('El historial de reproducción se ha eliminado correctamente.');
         } catch (error) {
             setMensaje(error.message);
         }
@@ -200,7 +221,7 @@ function App() {
 
     function handleResetRecomendaciones() {
         setRecomendaciones([]);
-        setMensaje('Las recomendaciones han sido reseteadas.');
+        setMensaje('Las recomendaciones han sido reiniciadas.');
     }
 
     async function handleTogglePlaylistTrack(playlistId, track, isInPlaylist) {
@@ -250,7 +271,7 @@ function App() {
 
     async function toggleFavorito(item) {
         if (!playlistFavoritos) {
-            setMensaje('No existe una playlist de Favoritos para este usuario.');
+            setMensaje('No existe una playlist de favoritos para este usuario.');
             return;
         }
         const itemId = typeof item === 'string' ? item : item?.id;
@@ -435,10 +456,12 @@ function App() {
                     onVaciarHistorial={handleVaciarHistorial}
                     onResetRecomendaciones={handleResetRecomendaciones}
                     onOpenAddToPlaylist={setTrackToAdd}
+                    isShuffle={isShuffle}
+                    onToggleShuffle={() => setIsShuffle(!isShuffle)}
+                    globalIsPlaying={globalIsPlaying}
                 />
             </div>
 
-            {/* SE PASAN LAS FUNCIONES AL PLAYERBAR PARA SU PROPIO MENÚ FLOTANTE */}
             <PlayerBar
                 pista={pistaActual}
                 jamendoTrack={jamendoActual}
@@ -458,6 +481,9 @@ function App() {
                 onToggleFavorito={toggleFavorito}
                 onTogglePlaylist={handleTogglePlaylistTrack}
                 onCreatePlaylist={handleCreatePlaylistAndAdd}
+                isShuffle={isShuffle}
+                activePlaylist={activePlaylist}
+                setGlobalIsPlaying={setGlobalIsPlaying}
             />
 
             {jamendoPreloadUrl && <audio className="hidden" src={jamendoPreloadUrl} preload="auto" />}
@@ -473,7 +499,11 @@ function App() {
                 catalogo={catalogo}
                 playlist={activePlaylist}
                 onCancel={() => setAddMusicOpen(false)}
-                onAccept={handleAgregarMusica}
+                onToggleTrack={handleTogglePlaylistTrack}
+                pistaActual={pistaActual}
+                jamendoActual={jamendoActual}
+                globalIsPlaying={globalIsPlaying}
+                onPlay={reproducirLocal}
             />
 
             <AddToPlaylistModal

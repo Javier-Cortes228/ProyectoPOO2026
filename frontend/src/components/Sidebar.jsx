@@ -30,14 +30,18 @@ function Sidebar({
                     <NavItem icon={<History size={20} />} label="Historial" active={activeView.type === 'history'} onClick={onOpenHistory} badge={historial.length} />
                     <NavItem icon={<Sparkles size={20} />} label="Para ti" active={activeView.type === 'recommendations'} onClick={onOpenRecommendations} />
                 </nav>
+                <div className="my-6 border-b border-white/5" />
 
                 <div>
-                    <div className="flex items-center justify-between px-2 mb-2">
-                        <span className="text-xs font-semibold text-textSub uppercase tracking-wider">Playlists</span>
-                        <button onClick={onCreatePlaylist} className="p-1 text-textSub hover:text-primary transition-colors" title="Crear nueva playlist">
-                            <Plus size={16} />
-                        </button>
-                    </div>
+                    <button
+                        onClick={onCreatePlaylist}
+                        className="w-full flex items-center justify-between px-4 py-3 mb-4 rounded-xl border border-[#22D3EE]/30 bg-[#22D3EE]/5 hover:bg-[#22D3EE]/10 hover:border-[#22D3EE]/50 transition-all group shadow-soft"
+                    >
+                        <span className="text-sm font-bold text-[#22D3EE] tracking-wide">Crear Playlist</span>
+                        <div className="p-1 rounded-md bg-[#22D3EE]/20 text-[#22D3EE] group-hover:bg-[#22D3EE] group-hover:text-background transition-colors shadow-[0_0_10px_rgba(34,211,238,0.2)]">
+                            <Plus size={16} strokeWidth={3} />
+                        </div>
+                    </button>
                     <div className="space-y-1">
                         {playlists.map((playlist) => (
                             <button
