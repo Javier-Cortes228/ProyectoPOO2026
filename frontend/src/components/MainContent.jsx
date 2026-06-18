@@ -210,7 +210,7 @@ function MainContent({
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#22D3EE]/10 rounded-full blur-[100px] pointer-events-none z-0" />
 
             <img
-                src="/logo-bandumusic.png"
+                src="/assets/images/logo-bandumusic.png"
                 alt=""
                 className="absolute top-[58%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] md:w-[800px] opacity-[0.03] pointer-events-none select-none z-0"
             />

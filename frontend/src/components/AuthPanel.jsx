@@ -118,7 +118,7 @@ function AuthPanel({
 
                 <div className="relative z-10 flex flex-col items-center p-12 text-center">
                     <img
-                        src="/logo-bandumusic.png"
+                        src="/assets/images/logo-bandumusic.png"
                         alt="BanduMusic Logo"
                         className="w-64 h-64 drop-shadow-[0_0_25px_rgba(58,137,255,0.4)]"
                     />
@@ -143,7 +143,7 @@ function AuthPanel({
                     <motion.div layout transition={premiumTransition} className="text-center mb-10">
                         {/* Vista Móvil */}
                         <img
-                            src="/logo-bandumusic.png"
+                            src="/assets/images/logo-bandumusic.png"
                             alt="BanduMusic Logo Pequeño"
                             className="w-24 h-24 mx-auto mb-4 lg:hidden drop-shadow-glow"
                         />
