@@ -14,7 +14,10 @@ import {
     reenviarVerificacion,
     registrarReproduccion,
     registrar,
+    restablecerContrasena,
     removerContenidoDePlaylist,
+    solicitarRecuperacionContrasena,
+    verificarCodigoRecuperacion,
     verificarCodigoCorreo,
     verificarCorreo,
     vaciarHistorial
@@ -34,14 +37,8 @@ function App() {
     const [historial, setHistorial] = useState([]);
     const [recomendaciones, setRecomendaciones] = useState([]);
     const [activeView, setActiveView] = useState({ type: 'home' });
-    const [pistaActual, setPistaActual] = useState(() => {
-        const saved = localStorage.getItem('bandu-pista-actual');
-        return saved ? JSON.parse(saved) : null;
-    });
-    const [jamendoActual, setJamendoActual] = useState(() => {
-        const saved = localStorage.getItem('bandu-jamendo-actual');
-        return saved ? JSON.parse(saved) : null;
-    });
+    const [pistaActual, setPistaActual] = useState(() => leerJsonLocal('bandu-pista-actual'));
+    const [jamendoActual, setJamendoActual] = useState(() => leerJsonLocal('bandu-jamendo-actual'));
     const [jamendoResultados, setJamendoResultados] = useState([]);
     const [jamendoQuery, setJamendoQuery] = useState('');
     const [jamendoOffset, setJamendoOffset] = useState(0);
@@ -133,6 +130,24 @@ function App() {
         setMensaje('');
         const data = await verificarCodigoCorreo(form.correo, form.codigo);
         setMensaje(data.mensaje || 'Correo verificado correctamente. Ya puedes iniciar sesion.');
+    }
+
+    async function handleSolicitarRecuperacion(correo) {
+        setMensaje('');
+        const data = await solicitarRecuperacionContrasena(correo);
+        setMensaje(data.mensaje || 'Si el correo existe, enviamos un codigo de recuperacion.');
+    }
+
+    async function handleVerificarCodigoRecuperacion(correo, codigo) {
+        setMensaje('');
+        const data = await verificarCodigoRecuperacion(correo, codigo);
+        setMensaje(data.mensaje || 'Codigo validado. Ahora puedes definir una nueva contrasena.');
+    }
+
+    async function handleRestablecerContrasena(correo, codigo, nuevaContrasena) {
+        setMensaje('');
+        const data = await restablecerContrasena(correo, codigo, nuevaContrasena);
+        setMensaje(data.mensaje || 'Contrasena actualizada correctamente. Ya puedes iniciar sesion.');
     }
 
     async function handleLogout() {
@@ -254,8 +269,22 @@ function App() {
         if (!usuario) return;
         try {
             const nuevaPlaylist = normalizarPlaylist(await crearPlaylist(usuario.id, nombre));
-            setUsuario((actual) => ({ ...actual, playlist: [...(actual.playlist || []), nuevaPlaylist] }));
-            await handleTogglePlaylistTrack(nuevaPlaylist.id, track, false);
+            let playlistFinal = nuevaPlaylist;
+
+            if (esContenidoJamendo(track)) {
+                playlistFinal = normalizarPlaylist(await agregarJamendoAPlaylist(nuevaPlaylist.id, track));
+            } else {
+                await agregarContenidoAPlaylist(nuevaPlaylist.id, track.id);
+                const contenido = catalogo.find((item) => item.id === track.id) || track;
+                const contenidos = [contenido];
+                playlistFinal = {
+                    ...nuevaPlaylist,
+                    contenidos,
+                    duracionTotalSegundos: calcularDuracion(contenidos)
+                };
+            }
+
+            setUsuario((actual) => ({ ...actual, playlist: [...(actual.playlist || []), playlistFinal] }));
             setMensaje(`Playlist "${nombre}" creada exitosamente.`);
         } catch (error) {
             setMensaje(error.message);
@@ -401,6 +430,9 @@ function App() {
                     onRegistro={handleRegistro}
                     onVerificarCodigo={handleVerificarCodigo}
                     onReenviarVerificacion={handleReenviarVerificacion}
+                    onSolicitarRecuperacion={handleSolicitarRecuperacion}
+                    onVerificarCodigoRecuperacion={handleVerificarCodigoRecuperacion}
+                    onRestablecerContrasena={handleRestablecerContrasena}
                     mensaje={mensaje}
                 />
             </main>
@@ -521,6 +553,15 @@ function App() {
 }
 
 function normalizarUsuario(usuario) { return { ...usuario, playlist: (usuario.playlist || []).map(normalizarPlaylist) }; }
+function leerJsonLocal(key) {
+    try {
+        const saved = localStorage.getItem(key);
+        return saved ? JSON.parse(saved) : null;
+    } catch {
+        localStorage.removeItem(key);
+        return null;
+    }
+}
 function normalizarPlaylist(playlist) { return { ...playlist, contenidos: playlist.contenidos || [], duracionTotalSegundos: playlist.duracionTotalSegundos || 0 }; }
 function normalizarHistorialItem(item) {
     const contenidoId = item.contenidoId || item.id;

@@ -137,13 +137,6 @@ public class PlaybackHistoryService {
 
     @Transactional
     public void vaciarHistorial(String correo) {
-        List<PlaybackHistoryItem> historial = playbackHistoryRepository.findByUsuarioCorreoOrderByReproducidoEnDesc(
-                correo,
-                PageRequest.of(0, Integer.MAX_VALUE)
-        );
-
-        if (!historial.isEmpty()) {
-            playbackHistoryRepository.deleteAll(historial);
-        }
+        playbackHistoryRepository.deleteByUsuarioCorreo(correo);
     }
 }

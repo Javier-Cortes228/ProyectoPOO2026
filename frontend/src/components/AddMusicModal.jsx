@@ -8,6 +8,7 @@ function AddMusicModal({ open, catalogo, playlist, onCancel, onToggleTrack, pist
     const [busqueda, setBusqueda] = useState('');
     const [jamendoResultados, setJamendoResultados] = useState([]);
     const [cargando, setCargando] = useState(false);
+    const [error, setError] = useState('');
 
     const currentTrack = pistaActual || jamendoActual;
 
@@ -16,6 +17,7 @@ function AddMusicModal({ open, catalogo, playlist, onCancel, onToggleTrack, pist
             setBusqueda('');
             setJamendoResultados([]);
             setTab('local');
+            setError('');
         }
     }, [open]);
 
@@ -26,11 +28,13 @@ function AddMusicModal({ open, catalogo, playlist, onCancel, onToggleTrack, pist
         }
         const delay = setTimeout(async () => {
             setCargando(true);
+            setError('');
             try {
                 const res = await buscarJamendo(busqueda, { limit: 15 });
                 setJamendoResultados(res);
             } catch (e) {
-                console.error("Error buscando en Jamendo:", e);
+                setJamendoResultados([]);
+                setError(e.message || 'No fue posible buscar en Jamendo.');
             } finally {
                 setCargando(false);
             }
@@ -93,6 +97,11 @@ function AddMusicModal({ open, catalogo, playlist, onCancel, onToggleTrack, pist
                         <div className="flex flex-col items-center justify-center h-full text-textSub">
                             <Loader2 size={32} className="animate-spin mb-4 text-[#3a89ff]" />
                             <p className="text-sm">Buscando en Jamendo...</p>
+                        </div>
+                    ) : error ? (
+                        <div className="flex flex-col items-center justify-center h-full text-red-400 px-6 text-center">
+                            <Music size={40} className="mb-4 opacity-20" />
+                            <p className="text-sm">{error}</p>
                         </div>
                     ) : itemsMostrar.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-textSub px-6 text-center">

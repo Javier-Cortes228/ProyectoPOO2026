@@ -14,7 +14,8 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal, playlists, favorit
 
     const [volume, setVolume] = useState(() => {
         const savedVol = localStorage.getItem('bandu-volume');
-        return savedVol !== null ? Number(savedVol) : 0.85;
+        const parsedVolume = savedVol !== null ? Number(savedVol) : 0.85;
+        return Number.isFinite(parsedVolume) ? Math.min(1, Math.max(0, parsedVolume)) : 0.85;
     });
     const [isMuted, setMuted] = useState(false);
 
@@ -348,7 +349,7 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal, playlists, favorit
                         >
                             {isPlaying ? <Pause size={20} className="fill-current" /> : <Play size={20} className="fill-current ml-0.5" />}
                         </button>
-                        <button onClick={next} disabled={currentIndex < 0 || currentIndex >= queue.length - 1} className="text-textSub hover:text-white disabled:opacity-30 disabled:hover:text-textSub transition-colors">
+                        <button onClick={next} disabled={isShuffle ? queue.length <= 1 : currentIndex < 0 || currentIndex >= queue.length - 1} className="text-textSub hover:text-white disabled:opacity-30 disabled:hover:text-textSub transition-colors">
                             <SkipForward size={22} />
                         </button>
                     </div>
