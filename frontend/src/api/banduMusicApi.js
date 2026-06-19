@@ -12,7 +12,7 @@ async function request(path, options = {}) {
   try {
     response = await fetch(path, { ...options, headers, credentials: 'include' });
   } catch {
-    throw new Error('No se pudo conectar con el backend. Verifica que Spring Boot este corriendo en http://localhost:8080.');
+    throw new Error('No se pudo conectar con el backend. Verifica que Spring Boot este corriendo y que VITE_BACKEND_URL coincida con el puerto configurado.');
   }
 
   if (!response.ok) {

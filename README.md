@@ -68,7 +68,8 @@ ProyectoPOO2026/
 La configuración sensible se maneja con variables de entorno. El archivo versionable de referencia es `backend/src/main/resources/application-example.properties`; el archivo local `application.properties` queda ignorado por Git para evitar publicar contraseñas o claves.
 
 ```properties
-DB_URL=jdbc:postgresql://localhost:5432/postgres
+SERVER_PORT=8080
+DB_URL=jdbc:postgresql://localhost:5432/bandumusic
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
 APP_CORS_ALLOWED_ORIGINS=http://127.0.0.1:5173,http://localhost:5173
@@ -99,7 +100,7 @@ npm install
 npm run dev
 ```
 
-El frontend Vite queda disponible en `http://127.0.0.1:5173` y usa proxy hacia el backend en `http://127.0.0.1:8080`.
+El frontend Vite queda disponible en `http://127.0.0.1:5173` y usa proxy hacia el backend en `http://127.0.0.1:8080` por defecto. Si cambias `SERVER_PORT`, define tambien `VITE_BACKEND_URL`, por ejemplo `http://127.0.0.1:8081`.
 
 ## Assets
 

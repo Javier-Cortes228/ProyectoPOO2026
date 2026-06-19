@@ -36,4 +36,10 @@ URL local:
 http://127.0.0.1:5173
 ```
 
-El proxy de Vite apunta a `http://localhost:8080` para `/api` y `/audio`, enviando cookies de autenticacion con `credentials: include`.
+El proxy de Vite apunta a `http://127.0.0.1:8080` para `/api` y `/audio` por defecto, enviando cookies de autenticacion con `credentials: include`.
+
+Si el backend corre en otro puerto, crea un archivo local `.env` dentro de `frontend/` o define la variable de entorno equivalente:
+
+```properties
+VITE_BACKEND_URL=http://127.0.0.1:8081
+```
