@@ -18,7 +18,7 @@ Frontend moderno de BanduMusic construido con React, Vite y Tailwind CSS.
 La identidad visual se configura en `tailwind.config.js`.
 
 - Fuentes: `Inter` y `Orbitron`.
-- Colores: `background`, `surface`, `hover`, `primary`, `secondary`, `textMain`, `textSub`.
+- Colores: Principal: `#3a89ff`, Secundario: `#22D3EE`.
 - Utilidad `.glass`: definida en `src/index.css` para paneles con blur y bordes sutiles.
 
 Los componentes nuevos deben reutilizar estos tokens para mantener coherencia con el rediseño.
