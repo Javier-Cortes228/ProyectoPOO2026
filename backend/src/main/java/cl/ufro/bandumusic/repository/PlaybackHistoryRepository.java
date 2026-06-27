@@ -12,5 +12,7 @@ public interface PlaybackHistoryRepository extends JpaRepository<PlaybackHistory
 
     List<PlaybackHistoryItem> findByUsuarioCorreoOrderByReproducidoEnDesc(String correo, Pageable pageable);
 
+    long deleteByUsuarioCorreo(String correo);
+
     long countByUsuarioCorreo(String correo);
 }
