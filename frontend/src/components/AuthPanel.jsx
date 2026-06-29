@@ -17,8 +17,8 @@ function AuthPanel({
     const [modo, setModo] = useState('login');
     const [form, setForm] = useState({
         nombreUsuario: '',
-        correo: 'admin@ufro.cl',
-        contrasena: '1234',
+        correo: '',
+        contrasena: '',
         codigo: '',
         nuevaContrasena: '',
         confirmarContrasena: ''
