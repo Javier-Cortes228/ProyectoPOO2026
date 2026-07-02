@@ -18,10 +18,10 @@ async function request(path, options = {}) {
   if (!response.ok) {
     const errorBody = await safeJson(response);
     const message = errorBody?.mensaje
-      || errorBody?.message
-      || (response.status >= 500
-        ? 'El backend no esta disponible o fallo al procesar la solicitud. Revisa la consola de Spring Boot.'
-        : 'No fue posible completar la solicitud.');
+        || errorBody?.message
+        || (response.status >= 500
+            ? 'Error interno, intente más tarde.'
+            : 'No fue posible completar la solicitud.');
     throw new Error(message);
   }
 
@@ -192,7 +192,7 @@ export function buscarJamendo(query, { limit = 30, offset = 0 } = {}) {
 }
 
 export function vaciarHistorial() {
-    return request('/api/historial/vaciar', {
-        method: 'DELETE'
-    });
+  return request('/api/historial/vaciar', {
+    method: 'DELETE'
+  });
 }
