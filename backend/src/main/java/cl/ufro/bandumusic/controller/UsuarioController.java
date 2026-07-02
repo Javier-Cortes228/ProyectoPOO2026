@@ -52,7 +52,7 @@ public class UsuarioController {
     public ResponseEntity<MensajeResponse> registrarUsuario(@Valid @RequestBody RegistroUsuarioRequest request) {
         usuarioService.registrar(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new MensajeResponse("Cuenta creada. Enviamos un codigo de verificacion a tu correo."));
+                .body(new MensajeResponse("Cuenta creada. Enviamos un código de verificación a tu correo."));
     }
 
     @PostMapping("/login")
@@ -82,7 +82,7 @@ public class UsuarioController {
             @RequestParam @NotBlank(message = "El token de verificacion es obligatorio.") String token
     ) {
         usuarioService.verificarCorreo(token);
-        return ResponseEntity.ok(new MensajeResponse("Correo verificado correctamente. Ya puedes iniciar sesion."));
+        return ResponseEntity.ok(new MensajeResponse("Correo verificado correctamente. Ya puedes iniciar sesión."));
     }
 
     @PostMapping("/verificar-codigo")
@@ -90,7 +90,7 @@ public class UsuarioController {
             @Valid @RequestBody VerificacionCorreoRequest request
     ) {
         usuarioService.verificarCodigoCorreo(request.correo(), request.codigo());
-        return ResponseEntity.ok(new MensajeResponse("Correo verificado correctamente. Ya puedes iniciar sesion."));
+        return ResponseEntity.ok(new MensajeResponse("Correo verificado correctamente. Ya puedes iniciar sesión."));
     }
 
     @PostMapping("/reenviar-verificacion")
@@ -101,7 +101,7 @@ public class UsuarioController {
             String correo
     ) {
         usuarioService.reenviarVerificacion(correo);
-        return ResponseEntity.ok(new MensajeResponse("Si la cuenta existe y aun no esta verificada, se envio un nuevo codigo."));
+        return ResponseEntity.ok(new MensajeResponse("Se envió un nuevo código de verificación."));
     }
 
     @PostMapping("/recuperacion/solicitar")
@@ -109,7 +109,7 @@ public class UsuarioController {
             @Valid @RequestBody RecuperacionContrasenaRequest request
     ) {
         usuarioService.solicitarRecuperacionContrasena(request.correo());
-        return ResponseEntity.ok(new MensajeResponse("Si el correo existe, enviamos un codigo de recuperacion."));
+        return ResponseEntity.ok(new MensajeResponse("Te enviamos un código de recuperacion, revisa tu correo."));
     }
 
     @PostMapping("/recuperacion/verificar")
@@ -117,7 +117,7 @@ public class UsuarioController {
             @Valid @RequestBody VerificacionRecuperacionRequest request
     ) {
         usuarioService.verificarCodigoRecuperacion(request.correo(), request.codigo());
-        return ResponseEntity.ok(new MensajeResponse("Codigo validado. Ahora puedes definir una nueva contrasena."));
+        return ResponseEntity.ok(new MensajeResponse("Código validado. Ahora puedes definir una nueva contraseña."));
     }
 
     @PostMapping("/recuperacion/restablecer")
@@ -125,7 +125,7 @@ public class UsuarioController {
             @Valid @RequestBody RestablecerContrasenaRequest request
     ) {
         usuarioService.restablecerContrasena(request.correo(), request.codigo(), request.nuevaContrasena());
-        return ResponseEntity.ok(new MensajeResponse("Contrasena actualizada correctamente. Ya puedes iniciar sesion."));
+        return ResponseEntity.ok(new MensajeResponse("Contraseña actualizada correctamente. Ya puedes iniciar sesión."));
     }
 
     private ResponseCookie crearCookieAutenticacion(String token) {
