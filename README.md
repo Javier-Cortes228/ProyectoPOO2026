@@ -77,7 +77,7 @@ JWT_SECRET=usar_una_clave_larga_y_privada
 JWT_EXPIRATION_SECONDS=86400
 AUTH_COOKIE_SECURE=false
 AUTH_COOKIE_SAME_SITE=Lax
-JAMENDO_CLIENT_ID=
+JAMENDO_CLIENT_ID=clave_jamendo
 JAMENDO_SEARCH_MAX_RESULTS=30
 ```
 
@@ -120,8 +120,8 @@ backend/src/main/resources/static/audio/
 
 Usuarios semilla:
 
-- `admin@ufro.cl` / `1234`
-- `test@ufro.cl` / `1234`
+- `admin@ufro.cl` / `A12345678`
+- `test@ufro.cl` / `B12345678`
 
 El catálogo local se carga automáticamente si la base de datos está vacía. El catálogo Jamendo requiere `JAMENDO_CLIENT_ID`.
 
