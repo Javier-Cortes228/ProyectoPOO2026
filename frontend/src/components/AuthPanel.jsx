@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, KeyRound, ArrowRight, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, KeyRound, ArrowRight, ArrowLeft } from 'lucide-react';
 
 const premiumTransition = { type: 'spring', bounce: 0, duration: 0.5 };
 
@@ -25,11 +25,6 @@ function AuthPanel({
     });
     const [error, setError] = useState('');
     const [isSubmitting, setSubmitting] = useState(false);
-    const [visiblePasswords, setVisiblePasswords] = useState({
-        contrasena: false,
-        nuevaContrasena: false,
-        confirmarContrasena: false
-    });
 
     async function submit(event) {
         event.preventDefault();
@@ -109,14 +104,6 @@ function AuthPanel({
 
     function update(field, value) {
         setForm({ ...form, [field]: value });
-    }
-
-    function togglePasswordVisibility(field) {
-        setVisiblePasswords((actual) => ({ ...actual, [field]: !actual[field] }));
-    }
-
-    function passwordInputType(field) {
-        return visiblePasswords[field] ? 'text' : 'password';
     }
     const esFlujoRecuperacion = modo.startsWith('forgot_');
 
@@ -299,16 +286,11 @@ function AuthPanel({
                                         <div className="relative">
                                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-textSub" />
                                             <input
-                                                type={passwordInputType('contrasena')}
-                                                className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-12 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-colors duration-300 ease-in-out placeholder:text-textSub/50"
+                                                type="password"
+                                                className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-colors duration-300 ease-in-out placeholder:text-textSub/50"
                                                 value={form.contrasena}
                                                 onChange={(event) => update('contrasena', event.target.value)}
                                                 placeholder={modo === 'registro' ? 'Mínimo 8 caracteres' : '••••••••'}
-                                            />
-                                            <PasswordVisibilityButton
-                                                visible={visiblePasswords.contrasena}
-                                                onClick={() => togglePasswordVisibility('contrasena')}
-                                                label={visiblePasswords.contrasena ? 'Ocultar contrasena' : 'Mostrar contrasena'}
                                             />
                                         </div>
                                         {modo === 'login' && (
@@ -375,16 +357,11 @@ function AuthPanel({
                                             <div className="relative">
                                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-textSub" />
                                                 <input
-                                                    type={passwordInputType('nuevaContrasena')}
-                                                    className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-12 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-colors duration-300 ease-in-out placeholder:text-textSub/50"
+                                                    type="password"
+                                                    className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-colors duration-300 ease-in-out placeholder:text-textSub/50"
                                                     value={form.nuevaContrasena}
                                                     onChange={(event) => update('nuevaContrasena', event.target.value)}
                                                     placeholder="Mínimo 8 caracteres"
-                                                />
-                                                <PasswordVisibilityButton
-                                                    visible={visiblePasswords.nuevaContrasena}
-                                                    onClick={() => togglePasswordVisibility('nuevaContrasena')}
-                                                    label={visiblePasswords.nuevaContrasena ? 'Ocultar contrasena' : 'Mostrar contrasena'}
                                                 />
                                             </div>
                                         </div>
@@ -394,16 +371,11 @@ function AuthPanel({
                                             <div className="relative">
                                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-textSub" />
                                                 <input
-                                                    type={passwordInputType('confirmarContrasena')}
-                                                    className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-12 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-colors duration-300 ease-in-out placeholder:text-textSub/50"
+                                                    type="password"
+                                                    className="w-full bg-surface/40 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-textMain focus:outline-none focus:border-[#22D3EE] focus:ring-1 focus:ring-[#22D3EE] transition-colors duration-300 ease-in-out placeholder:text-textSub/50"
                                                     value={form.confirmarContrasena}
                                                     onChange={(event) => update('confirmarContrasena', event.target.value)}
                                                     placeholder="Confirma tu contraseña"
-                                                />
-                                                <PasswordVisibilityButton
-                                                    visible={visiblePasswords.confirmarContrasena}
-                                                    onClick={() => togglePasswordVisibility('confirmarContrasena')}
-                                                    label={visiblePasswords.confirmarContrasena ? 'Ocultar contrasena' : 'Mostrar contrasena'}
                                                 />
                                             </div>
                                         </div>
@@ -488,35 +460,6 @@ function AuthPanel({
                 </motion.form>
             </div>
         </div>
-    );
-}
-
-function PasswordVisibilityButton({ visible, onClick, label }) {
-    const Icon = visible ? EyeOff : Eye;
-
-    return (
-        <motion.button
-            type="button"
-            aria-label={label}
-            title={label}
-            onClick={onClick}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.94 }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#22D3EE] hover:text-white transition-colors duration-300 ease-in-out"
-        >
-            <AnimatePresence mode="wait" initial={false}>
-                <motion.span
-                    key={visible ? 'visible' : 'hidden'}
-                    initial={{ opacity: 0, rotate: -8, scale: 0.9 }}
-                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                    exit={{ opacity: 0, rotate: 8, scale: 0.9 }}
-                    transition={{ duration: 0.16, ease: 'easeOut' }}
-                    className="flex items-center justify-center"
-                >
-                    <Icon size={20} strokeWidth={2.2} />
-                </motion.span>
-            </AnimatePresence>
-        </motion.button>
     );
 }
 
