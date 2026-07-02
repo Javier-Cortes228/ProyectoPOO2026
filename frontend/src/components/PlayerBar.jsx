@@ -18,6 +18,7 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal, playlists, favorit
         return Number.isFinite(parsedVolume) ? Math.min(1, Math.max(0, parsedVolume)) : 0.85;
     });
     const [isMuted, setMuted] = useState(false);
+    const previousVolumeRef = useRef(volume > 0 ? volume : 0.85);
 
     const isInitialRender = useRef(true);
 
@@ -38,6 +39,17 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal, playlists, favorit
     const effectiveVolume = isMuted ? 0 : volume;
 
     const isSaved = current ? (favoritosIds.includes(current.id) || playlists.some(p => p.contenidos?.some(c => c.id === current.id))) : false;
+
+    useEffect(() => {
+        if (volume > 0) previousVolumeRef.current = volume;
+    }, [volume]);
+
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio) return;
+        audio.volume = effectiveVolume;
+        audio.muted = effectiveVolume === 0;
+    }, [effectiveVolume, audioSrc]);
 
     useEffect(() => {
         if (setGlobalIsPlaying) setGlobalIsPlaying(isPlaying);
@@ -132,7 +144,26 @@ function PlayerBar({ pista, jamendoTrack, queue, onPlayLocal, playlists, favorit
         }
     }
 
-    function toggleMute() { setMuted((actual) => !actual); }
+    function toggleMute() {
+        if (isMuted) {
+            const restoredVolume = volume > 0 ? volume : previousVolumeRef.current;
+            setVolume(restoredVolume);
+            setMuted(false);
+            localStorage.setItem('bandu-volume', restoredVolume);
+            if (audioRef.current) {
+                audioRef.current.muted = false;
+                audioRef.current.volume = restoredVolume;
+            }
+            return;
+        }
+
+        if (volume > 0) previousVolumeRef.current = volume;
+        setMuted(true);
+        if (audioRef.current) {
+            audioRef.current.volume = 0;
+            audioRef.current.muted = true;
+        }
+    }
 
     const handleSavePopover = () => {
         const isCurrentlyFavorito = favoritosIds.includes(current.id);
