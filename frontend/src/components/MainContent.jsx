@@ -281,36 +281,82 @@ function DynamicHeader({ usuario, playlistsCount, favoritos }) {
 }
 
 function Topbar({ busqueda, setBusqueda, onLogout }) {
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
     return (
-        <header className="h-20 px-8 flex items-center justify-between glass border-b border-white/5 z-20 sticky top-0">
-            <div className="relative w-full max-w-md">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-textSub w-5 h-5" />
-                <input
-                    className="w-full bg-surface/50 border border-white/10 rounded-full pl-12 pr-12 py-2.5 text-sm text-textMain focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors duration-300 ease-in-out placeholder:text-textSub"
-                    value={busqueda}
-                    onChange={(event) => setBusqueda(event.target.value)}
-                    placeholder="¿Qué quieres reproducir?"
-                />
-                {busqueda && (
+        <>
+            <header className="h-20 px-8 flex items-center justify-between glass border-b border-white/5 z-20 sticky top-0">
+                <div className="relative w-full max-w-md">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-textSub w-5 h-5" />
+                    <input
+                        className="w-full bg-surface/50 border border-white/10 rounded-full pl-12 pr-12 py-2.5 text-sm text-textMain focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors duration-300 ease-in-out placeholder:text-textSub"
+                        value={busqueda}
+                        onChange={(event) => setBusqueda(event.target.value)}
+                        placeholder="¿Qué quieres reproducir?"
+                    />
+                    {busqueda && (
+                        <button
+                            type="button"
+                            onClick={() => setBusqueda('')}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-textSub hover:text-white transition-colors"
+                        >
+                            <X size={16} />
+                        </button>
+                    )}
+                </div>
+                <div className="flex items-center gap-4">
                     <button
-                        type="button"
-                        onClick={() => setBusqueda('')}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-textSub hover:text-white transition-colors"
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-surface/50 text-textSub hover:text-white hover:bg-red-500/20 hover:border-red-500/30 transition-colors border border-white/5"
+                        onClick={() => setShowLogoutConfirm(true)}
                     >
-                        <X size={16} />
+                        <span className="text-sm font-medium">Cerrar sesión</span>
+                        <LogOut size={16} />
                     </button>
+                </div>
+            </header>
+
+            <AnimatePresence>
+                {showLogoutConfirm && (
+                    <motion.div
+                        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="logout-confirm-title"
+                            className="w-full max-w-sm glass border border-white/10 rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.55)]"
+                            initial={{ opacity: 0, scale: 0.94, y: 18 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.96, y: 12 }}
+                            transition={{ duration: 0.18, ease: 'easeOut' }}
+                        >
+                            <h2 id="logout-confirm-title" className="text-xl font-outfit font-bold text-white text-center mb-2">
+                                ¿Está seguro de cerrar su sesión?
+                            </h2>
+                            <div className="mt-6 grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    className="rounded-xl border border-white/10 bg-surface/60 px-4 py-3 text-sm font-semibold text-textSub hover:text-white hover:bg-white/5 transition-colors"
+                                    onClick={() => setShowLogoutConfirm(false)}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    className="rounded-xl border border-red-500/30 bg-red-500/15 px-4 py-3 text-sm font-semibold text-red-300 hover:bg-red-500/25 hover:text-white transition-colors"
+                                    onClick={onLogout}
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
                 )}
-            </div>
-            <div className="flex items-center gap-4">
-                <button
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-surface/50 text-textSub hover:text-white hover:bg-red-500/20 hover:border-red-500/30 transition-colors border border-white/5"
-                    onClick={onLogout}
-                >
-                    <span className="text-sm font-medium">Cerrar sesión</span>
-                    <LogOut size={16} />
-                </button>
-            </div>
-        </header>
+            </AnimatePresence>
+        </>
     );
 }
 
