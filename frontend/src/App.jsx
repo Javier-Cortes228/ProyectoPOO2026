@@ -117,13 +117,13 @@ function App() {
     async function handleRegistro(form) {
         setMensaje('');
         const data = await registrar(form.nombreUsuario, form.correo, form.contrasena);
-        setMensaje(data.mensaje || 'Cuenta creada. Revisa tu correo para obtener el codigo.');
+        setMensaje(data.mensaje || 'Cuenta creada. Revisa tu correo para obtener el codigo de verificación.');
     }
 
     async function handleReenviarVerificacion(correo) {
         setMensaje('');
         const data = await reenviarVerificacion(correo);
-        setMensaje(data.mensaje || 'Se envio un nuevo codigo de verificacion.');
+        setMensaje(data.mensaje || 'Se envió un nuevo código de verificacion.');
     }
 
     async function handleVerificarCodigo(form) {
@@ -135,19 +135,19 @@ function App() {
     async function handleSolicitarRecuperacion(correo) {
         setMensaje('');
         const data = await solicitarRecuperacionContrasena(correo);
-        setMensaje(data.mensaje || 'Si el correo existe, enviamos un codigo de recuperacion.');
+        setMensaje(data.mensaje || 'Te enviamos un código de recuperación.');
     }
 
     async function handleVerificarCodigoRecuperacion(correo, codigo) {
         setMensaje('');
         const data = await verificarCodigoRecuperacion(correo, codigo);
-        setMensaje(data.mensaje || 'Codigo validado. Ahora puedes definir una nueva contrasena.');
+        setMensaje(data.mensaje || 'Codigo validado. Ahora puedes definir una nueva contraseña.');
     }
 
     async function handleRestablecerContrasena(correo, codigo, nuevaContrasena) {
         setMensaje('');
         const data = await restablecerContrasena(correo, codigo, nuevaContrasena);
-        setMensaje(data.mensaje || 'Contrasena actualizada correctamente. Ya puedes iniciar sesion.');
+        setMensaje(data.mensaje || 'Contraseña actualizada correctamente. Ya puedes iniciar sesion.');
     }
 
     async function handleLogout() {
