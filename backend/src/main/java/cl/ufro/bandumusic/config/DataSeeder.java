@@ -43,11 +43,11 @@ public class DataSeeder implements CommandLineRunner {
         // Solo inyectamos usuarios si la tabla está vacía
         if (usuarioRepository.count() == 0) {
             LOGGER.info("Sembrando usuarios por defecto...");
-            Usuario admin = new Usuario("u1", "Admin", "admin@ufro.cl", passwordEncoder.encode("1234"));
+            Usuario admin = new Usuario("u1", "Admin", "admin@ufro.cl", passwordEncoder.encode("A12345678"));
             admin.marcarCorreoComoVerificado();
             usuarioRepository.save(admin);
 
-            Usuario test = new Usuario("u2", "Test", "test@ufro.cl", passwordEncoder.encode("1234"));
+            Usuario test = new Usuario("u2", "Test", "test@ufro.cl", passwordEncoder.encode("B12345678"));
             test.marcarCorreoComoVerificado();
             usuarioRepository.save(test);
             LOGGER.info("Usuarios por defecto listos.");
