@@ -21,7 +21,7 @@ class LoginIntegrationTest {
 
     @Test
     void loginUsuarioSemillaRetornaTokenYPlaylists() {
-        var response = usuarioController.loginUsuario(new LoginRequest("admin@ufro.cl", "1234"));
+        var response = usuarioController.loginUsuario(new LoginRequest("admin@ufro.cl", "A12345678"));
         var body = response.getBody();
 
         assertNotNull(body);
